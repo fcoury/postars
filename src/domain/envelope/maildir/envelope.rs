@@ -60,6 +60,10 @@ pub fn from_raw(mut entry: RawEnvelope) -> Result<Envelope> {
         }
     }
 
+    if envelope.message_id.is_empty() {
+        envelope.message_id = envelope.date.to_rfc3339();
+    }
+
     trace!("maildir envelope: {:?}", envelope);
 
     Ok(envelope)

@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+* Fixed `ImapBackend::list_envelopes` pagination.
+* Fixed synchronization issues for emails without `Message-ID` header
+  by using the `Date` header instead.
+
 ## [0.5.1] - 2023-02-08
 
 ### Fixed

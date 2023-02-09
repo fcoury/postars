@@ -33,11 +33,6 @@ pub fn from_raw(fetch: &Fetch) -> Result<Envelope> {
 
     let internal_id = id.clone();
 
-    let message_id = String::from_utf8(envelope.message_id.clone().unwrap_or_default().to_vec())
-        .map_err(|err| Error::ParseMessageIdError(err, id.clone()))?
-        .trim()
-        .to_owned();
-
     let flags = Flags::from(fetch.flags());
 
     let subject = envelope
@@ -88,6 +83,17 @@ pub fn from_raw(fetch: &Fetch) -> Result<Envelope> {
         Some(date) => date?.unwrap_or_default(),
         None => DateTime::default(),
     };
+
+    let message_id = String::from_utf8(
+        envelope
+            .message_id
+            .clone()
+            .unwrap_or_else(|| date.to_rfc3339().into_bytes().into())
+            .to_vec(),
+    )
+    .map_err(|err| Error::ParseMessageIdError(err, id.clone()))?
+    .trim()
+    .to_owned();
 
     let envelope = Envelope {
         id,
