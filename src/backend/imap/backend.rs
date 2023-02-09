@@ -525,18 +525,21 @@ impl<'a> Backend for ImapBackend<'a> {
             return Ok(Envelopes::default());
         }
 
-        let range = if page_size > 0 {
-            let begin = folder_size.min(page * page_size + 1);
-            let end = begin + folder_size.min(page_size);
-            (begin..end).fold(String::new(), |range, seq| {
-                if range.is_empty() {
-                    seq.to_string()
-                } else {
-                    range + "," + &seq.to_string()
-                }
-            })
-        } else {
+        let range = if page_size == 0 {
             String::from("1:*")
+        } else {
+            let mut count = 1;
+            let mut cursor = folder_size - (folder_size.min(page * page_size) + 1);
+            let mut range = cursor.to_string();
+            while cursor > 0 && count < page_size {
+                count += 1;
+                cursor -= 1;
+                if count > 1 {
+                    range.push(',');
+                }
+                range.push_str(&cursor.to_string());
+            }
+            range
         };
         trace!("page: {page}");
         trace!("page size: {page_size}");
