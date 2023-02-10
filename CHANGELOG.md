@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+* Added ability to synchronize specific folders only [#37].
+
 ### Fixed
 
 * Fixed `ImapBackend::list_envelopes` pagination.
@@ -170,6 +174,7 @@ repository.
 [patch#1]: https://lists.sr.ht/~soywod/himalaya-lib/%3C20220929084520.98165-1-me%40paulrouget.com%3E
 
 [#20]: https://todo.sr.ht/~soywod/pimalaya/20
+[#37]: https://todo.sr.ht/~soywod/pimalaya/37
 
 [0.5.1]: https://git.sr.ht/~soywod/himalaya-lib/refs/v0.5.1
 [0.5.0]: https://git.sr.ht/~soywod/himalaya-lib/refs/v0.5.0

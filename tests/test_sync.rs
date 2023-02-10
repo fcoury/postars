@@ -194,13 +194,39 @@ fn test_sync() {
 
     let mut conn = rusqlite::Connection::open(sync_dir.join(".sync.sqlite")).unwrap();
 
-    let local_folders_cached =
-        folder::sync::Cache::list_local_folders(&mut conn, &account.name).unwrap();
+    let local_folders_cached = folder::sync::Cache::list_local_folders(
+        &mut conn,
+        &account.name,
+        Some(&vec!["[Gmail]/Sent".into()]),
+    )
+    .unwrap();
+    assert!(!local_folders_cached.contains("INBOX"));
+    assert!(local_folders_cached.contains("[Gmail]/Sent"));
+
+    let local_folders_cached = folder::sync::Cache::list_local_folders(
+        &mut conn,
+        &account.name,
+        Option::<Vec<String>>::None,
+    )
+    .unwrap();
     assert!(local_folders_cached.contains("INBOX"));
     assert!(local_folders_cached.contains("[Gmail]/Sent"));
 
-    let remote_folders_cached =
-        folder::sync::Cache::list_remote_folders(&mut conn, &account.name).unwrap();
+    let remote_folders_cached = folder::sync::Cache::list_remote_folders(
+        &mut conn,
+        &account.name,
+        Some(&vec!["[Gmail]/Sent".into()]),
+    )
+    .unwrap();
+    assert!(!remote_folders_cached.contains("INBOX"));
+    assert!(remote_folders_cached.contains("[Gmail]/Sent"));
+
+    let remote_folders_cached = folder::sync::Cache::list_remote_folders(
+        &mut conn,
+        &account.name,
+        Option::<Vec<String>>::None,
+    )
+    .unwrap();
     assert!(remote_folders_cached.contains("INBOX"));
     assert!(remote_folders_cached.contains("[Gmail]/Sent"));
 

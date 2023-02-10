@@ -209,6 +209,7 @@ pub struct BackendSyncReport {
 pub struct BackendSyncBuilder<'a> {
     account_config: &'a AccountConfig,
     on_progress: Box<dyn Fn(BackendSyncProgressEvent) -> Result<()> + Sync + Send + 'a>,
+    folders: Option<Vec<String>>,
     dry_run: bool,
 }
 
@@ -217,6 +218,7 @@ impl<'a> BackendSyncBuilder<'a> {
         Self {
             account_config,
             on_progress: Box::new(|_| Ok(())),
+            folders: None,
             dry_run: false,
         }
     }
@@ -226,6 +228,39 @@ impl<'a> BackendSyncBuilder<'a> {
         F: Fn(BackendSyncProgressEvent) -> Result<()> + Sync + Send + 'a,
     {
         self.on_progress = Box::new(f);
+        self
+    }
+
+    pub fn all_folders(mut self) -> Self {
+        self.folders = None;
+        self
+    }
+
+    pub fn only_folder<F>(mut self, folder: F) -> Self
+    where
+        F: ToString,
+    {
+        self.folders = match self.folders {
+            None => Some(vec![folder.to_string()]),
+            Some(mut folders) => {
+                folders.push(folder.to_string());
+                Some(folders)
+            }
+        };
+        self
+    }
+
+    pub fn only_folders<F, I>(mut self, folders: I) -> Self
+    where
+        F: ToString,
+        I: IntoIterator<Item = F>,
+    {
+        self.folders = Some(
+            folders
+                .into_iter()
+                .map(|folder| folder.to_string())
+                .collect::<Vec<_>>(),
+        );
         self
     }
 
@@ -265,6 +300,7 @@ impl<'a> BackendSyncBuilder<'a> {
 
         let folders_sync_report = folder::SyncBuilder::new(self.account_config)
             .on_progress(|data| Ok(progress(data).map_err(Box::new)?))
+            .folders(self.folders.clone())
             .dry_run(self.dry_run)
             .sync(&mut conn, &local, remote)?;
 

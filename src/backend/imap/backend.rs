@@ -46,6 +46,8 @@ pub enum Error {
     // Envelopes
     #[error("cannot get imap envelope of email {0}")]
     GetEnvelopeError(String),
+    #[error("cannot list imap envelopes: page {0} out of bounds")]
+    ListEnvelopesOutOfBounds(usize),
     #[error("cannot fetch new imap envelopes")]
     FetchNewEnvelopesError(#[source] imap::Error),
     #[error("cannot search new imap envelopes")]
@@ -525,11 +527,17 @@ impl<'a> Backend for ImapBackend<'a> {
             return Ok(Envelopes::default());
         }
 
+        let page_cursor = page * page_size;
+        if page_cursor >= folder_size {
+            return Err(Error::ListEnvelopesOutOfBounds(page + 1))?;
+        }
+
         let range = if page_size == 0 {
             String::from("1:*")
         } else {
+            let page_size = page_size.min(folder_size);
             let mut count = 1;
-            let mut cursor = folder_size - (folder_size.min(page * page_size) + 1);
+            let mut cursor = folder_size - (folder_size.min(page_cursor));
             let mut range = cursor.to_string();
             while cursor > 0 && count < page_size {
                 count += 1;
