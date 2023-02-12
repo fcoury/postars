@@ -331,6 +331,9 @@ impl<'a> BackendSyncBuilder<'a> {
             if let Some(err) = report.cache_patch.1 {
                 envelopes_cache_patch.1.push(err);
             }
+
+            local.expunge_folder(folder)?;
+            remote.expunge_folder(folder)?;
         }
 
         drop(guard);

@@ -344,7 +344,7 @@ impl<'a> SyncBuilder<'a> {
                     }
                     BackendHunk::RemoveEmail(folder, internal_id, HunkKind::Local) => {
                         local
-                            .delete_emails_internal(folder, vec![internal_id])
+                            .mark_emails_as_deleted_internal(folder, vec![internal_id])
                             .map_err(Box::new)?;
                         vec![]
                     }
@@ -357,7 +357,7 @@ impl<'a> SyncBuilder<'a> {
                     }
                     BackendHunk::RemoveEmail(folder, internal_id, HunkKind::Remote) => {
                         remote
-                            .delete_emails_internal(folder, vec![internal_id])
+                            .mark_emails_as_deleted_internal(folder, vec![internal_id])
                             .map_err(Box::new)?;
                         vec![]
                     }
