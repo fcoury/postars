@@ -1,18 +1,12 @@
-#[cfg(feature = "maildir-backend")]
 use concat_with::concat_line;
-#[cfg(feature = "maildir-backend")]
 use maildir::Maildir;
-#[cfg(feature = "maildir-backend")]
 use std::{borrow::Cow, collections::HashMap, fs, iter::FromIterator};
-#[cfg(feature = "maildir-backend")]
 use tempfile::tempdir;
 
-#[cfg(feature = "maildir-backend")]
 use himalaya_lib::{
     AccountConfig, Backend, CompilerBuilder, Flag, Flags, MaildirBackend, MaildirConfig, TplBuilder,
 };
 
-#[cfg(feature = "maildir-backend")]
 #[test]
 fn test_maildir_backend() {
     env_logger::builder().is_test(true).init();

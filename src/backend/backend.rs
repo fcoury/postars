@@ -10,11 +10,8 @@ use thiserror::Error;
 
 use crate::{
     account, backend, email, envelope, folder, id_mapper, AccountConfig, BackendConfig, Emails,
-    Envelope, Envelopes, Flags, Folders, ImapBackendBuilder, MaildirConfig,
+    Envelope, Envelopes, Flags, Folders, ImapBackendBuilder, MaildirBackend, MaildirConfig,
 };
-
-#[cfg(feature = "maildir-backend")]
-use crate::MaildirBackend;
 
 #[cfg(feature = "notmuch-backend")]
 use crate::NotmuchBackend;
@@ -43,7 +40,6 @@ pub enum Error {
     #[cfg(feature = "imap-backend")]
     #[error(transparent)]
     ImapBackendError(#[from] backend::imap::Error),
-    #[cfg(feature = "maildir-backend")]
     #[error(transparent)]
     MaildirBackendError(#[from] backend::maildir::Error),
     #[cfg(feature = "notmuch-backend")]
@@ -379,7 +375,6 @@ impl<'a> BackendBuilder {
                     root_dir: account_config.sync_dir()?,
                 }),
             )?)),
-            #[cfg(feature = "maildir-backend")]
             BackendConfig::Maildir(maildir_config) => Ok(Box::new(MaildirBackend::new(
                 Cow::Borrowed(account_config),
                 Cow::Borrowed(maildir_config),

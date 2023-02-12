@@ -8,10 +8,9 @@ license = "MIT"
 
 [features]
 imap-backend = ["imap", "imap-proto", "utf7-imap"]
-maildir-backend = ["maildir", "md5"]
-notmuch-backend = ["notmuch", "maildir-backend"]
+notmuch-backend = ["notmuch"]
 smtp-sender = []
-default = ["imap-backend", "maildir-backend", "smtp-sender"]
+default = ["imap-backend", "smtp-sender"]
 
 [dev-dependencies]
 concat-with = "0.2"
@@ -28,6 +27,8 @@ html-escape = "0.2"
 lettre = { version = "=0.10.1", features = ["serde"] }
 log = "0.4"
 mailparse = "0.14"
+maildir = { version = "=0.6.3", features = ["mmap"] }
+md5 = "0.7.0"
 mime-msg-builder = "0.1"
 native-tls = "0.2"
 ouroboros = "0.15"
@@ -46,10 +47,8 @@ uuid = { version = "0.8", features = ["v4"] }
 # [dependencies.optional]
 imap = { version = "=3.0.0-alpha.9", optional = true }
 imap-proto = { version = "=0.16.2", optional = true }
-maildir = { version = "=0.6.3", optional = true }
-md5 = { version = "0.7.0", optional = true }
-notmuch = { version = "=0.8.0", optional = true }
 utf7-imap = { version = "=0.3.2", optional = true }
+notmuch = { version = "=0.8.0", optional = true }
 
 [[bench]]
 name = "sync"

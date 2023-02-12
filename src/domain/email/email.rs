@@ -4,6 +4,7 @@ use lettre::{
     message::{Mailbox, Mailboxes},
 };
 use log::{trace, warn};
+use maildir::{MailEntry, MailEntryError};
 use mailparse::{
     addrparse_header, DispositionType, MailAddr, MailHeaderMap, MailParseError, ParsedMail,
 };
@@ -13,15 +14,11 @@ use std::{fmt::Debug, io, path::PathBuf, result};
 use thiserror::Error;
 use tree_magic;
 
-#[cfg(feature = "maildir-backend")]
-use maildir::{MailEntry, MailEntryError};
-
 use crate::{account, process, AccountConfig, Attachment};
 
 #[derive(Debug, Error)]
 pub enum Error {
     #[error("cannot parse email")]
-    #[cfg(feature = "maildir-backend")]
     GetMailEntryError(#[source] MailEntryError),
 
     #[error("cannot get parsed version of email: {0}")]
@@ -69,7 +66,6 @@ pub enum Error {
 enum ParsedBuilderError {
     #[error("cannot parse email")]
     MailParseError(#[source] MailParseError),
-    #[cfg(feature = "maildir-backend")]
     #[error("cannot parse email")]
     MailEntryError(#[source] MailEntryError),
 }
@@ -81,7 +77,6 @@ enum RawEmail<'a> {
     Slice(&'a [u8]),
     #[cfg(feature = "imap-backend")]
     Fetch(&'a Fetch<'a>),
-    #[cfg(feature = "maildir-backend")]
     MailEntry(&'a mut MailEntry),
 }
 
@@ -107,7 +102,6 @@ impl Email<'_> {
             #[cfg(feature = "imap-backend")]
             RawEmail::Fetch(fetch) => mailparse::parse_mail(fetch.body().unwrap_or_default())
                 .map_err(ParsedBuilderError::MailParseError),
-            #[cfg(feature = "maildir-backend")]
             RawEmail::MailEntry(entry) => {
                 entry.parsed().map_err(ParsedBuilderError::MailEntryError)
             }
@@ -316,6 +310,7 @@ impl Email<'_> {
         let parsed = self.parsed()?;
         let parsed_headers = parsed.get_headers();
         let sender = config.addr()?;
+        let sender_email = sender.email.to_string();
 
         // From
 
@@ -345,7 +340,7 @@ impl Email<'_> {
                                 MailAddr::Group(group) => match group.addrs.first() {
                                     None => (),
                                     Some(single) => {
-                                        if single.addr != sender.email.as_ref() {
+                                        if single.addr != sender_email {
                                             all_mboxes.push(Mailbox::new(
                                                 single.display_name.clone(),
                                                 single.addr.parse().unwrap(),
@@ -354,7 +349,7 @@ impl Email<'_> {
                                     }
                                 },
                                 MailAddr::Single(single) => {
-                                    if single.addr != sender.email.as_ref() {
+                                    if single.addr != sender_email {
                                         all_mboxes.push(Mailbox::new(
                                             single.display_name.clone(),
                                             single.addr.parse().unwrap(),
@@ -537,7 +532,6 @@ impl<'a> From<&'a Fetch<'a>> for Email<'a> {
     }
 }
 
-#[cfg(feature = "maildir-backend")]
 impl<'a> From<&'a mut MailEntry> for Email<'a> {
     fn from(entry: &'a mut MailEntry) -> Self {
         EmailBuilder {
@@ -558,7 +552,6 @@ enum RawEmails {
     Vec(Vec<Vec<u8>>),
     #[cfg(feature = "imap-backend")]
     Fetches(Fetches),
-    #[cfg(feature = "maildir-backend")]
     MailEntries(Vec<MailEntry>),
 }
 
@@ -576,7 +569,6 @@ impl Emails {
             RawEmails::Vec(vec) => vec.iter().map(Vec::as_slice).map(Email::from).collect(),
             #[cfg(feature = "imap-backend")]
             RawEmails::Fetches(fetches) => fetches.iter().map(Email::from).collect(),
-            #[cfg(feature = "maildir-backend")]
             RawEmails::MailEntries(entries) => entries.iter_mut().map(Email::from).collect(),
         }
     }
@@ -617,7 +609,6 @@ impl TryFrom<Fetches> for Emails {
     }
 }
 
-#[cfg(feature = "maildir-backend")]
 impl TryFrom<Vec<MailEntry>> for Emails {
     type Error = Error;
 

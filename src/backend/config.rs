@@ -6,7 +6,6 @@
 #[cfg(feature = "imap-backend")]
 use crate::ImapConfig;
 
-#[cfg(feature = "maildir-backend")]
 use crate::MaildirConfig;
 
 #[cfg(feature = "notmuch-backend")]
@@ -16,10 +15,9 @@ use crate::NotmuchConfig;
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub enum BackendConfig {
     None,
+    Maildir(MaildirConfig),
     #[cfg(feature = "imap-backend")]
     Imap(ImapConfig),
-    #[cfg(feature = "maildir-backend")]
-    Maildir(MaildirConfig),
     #[cfg(feature = "notmuch-backend")]
     Notmuch(NotmuchConfig),
 }

@@ -17,11 +17,8 @@ use std::{
 use thiserror::Error;
 
 use crate::{
-    account, backend, email,
-    envelope::maildir::{envelope, envelopes},
-    flag::maildir::flags,
-    AccountConfig, Backend, Emails, Envelope, Envelopes, Flag, Flags, Folder, Folders, IdMapper,
-    MaildirConfig, DEFAULT_INBOX_FOLDER,
+    account, backend, email, flag::maildir::flags, AccountConfig, Backend, Emails, Envelope,
+    Envelopes, Flag, Flags, Folder, Folders, IdMapper, MaildirConfig, DEFAULT_INBOX_FOLDER,
 };
 
 #[derive(Debug, Error)]
@@ -336,7 +333,7 @@ impl<'a> Backend for MaildirBackend<'a> {
 
         let mdir = self.get_mdir_from_dir(folder)?;
         let internal_id = self.id_mapper(folder)?.get_internal_id(id)?;
-        let mut envelope = envelope::from_raw(
+        let mut envelope = Envelope::try_from(
             mdir.find(&internal_id)
                 .ok_or_else(|| Error::GetEnvelopeError(id.to_owned()))?,
         )?;
@@ -352,7 +349,7 @@ impl<'a> Backend for MaildirBackend<'a> {
         );
 
         let mdir = self.get_mdir_from_dir(folder)?;
-        let mut envelope = envelope::from_raw(
+        let mut envelope = Envelope::try_from(
             mdir.find(internal_id)
                 .ok_or_else(|| Error::GetEnvelopeError(internal_id.to_owned()))?,
         )?;
@@ -373,7 +370,7 @@ impl<'a> Backend for MaildirBackend<'a> {
 
         let mdir = self.get_mdir_from_dir(folder)?;
         let id_mapper = self.id_mapper(folder)?;
-        let mut envelopes = envelopes::from_raws(mdir.list_cur())?;
+        let mut envelopes = Envelopes::try_from(mdir.list_cur())?;
 
         let page_begin = page * page_size;
         trace!("page begin: {}", page_begin);

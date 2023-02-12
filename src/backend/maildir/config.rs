@@ -6,7 +6,6 @@
 use std::path::PathBuf;
 
 /// Represents the Maildir backend config.
-#[cfg(feature = "maildir-backend")]
 #[derive(Debug, Default, Clone, Eq, PartialEq)]
 pub struct MaildirConfig {
     /// Represents the Maildir root directory.

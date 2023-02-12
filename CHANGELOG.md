@@ -16,6 +16,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed `ImapBackend::list_envelopes` pagination.
 * Fixed synchronization issues for emails without `Message-ID` header
   by using the `Date` header instead.
+* Fixed maildir backend perfs issues by enabling the `mmap` feature of
+  the `maildir` crate.
+  
+### Removed
+
+* Removed the `maildir-backend` cargo feature, it is now included by
+  default.
 
 ## [0.5.1] - 2023-02-08
 
