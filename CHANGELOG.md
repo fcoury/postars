@@ -10,6 +10,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 * Added ability to synchronize specific folders only [#37].
+* Added `Backend::expunge` function that definitely removes emails
+  with the `Deleted` flag.
+* Added `Backend::mark_emails_as_deleted` function with a default
+  implementation that adds the `Deleted` flag.
+
+### Changed
+
+* Changed the way emails are deleted. `Backend::delete_emails` now
+  moves the email to the `Trash` folder (or to the corresponding alias
+  from the config file). If the target folder is the `Trash` folder,
+  it will instead add the `Deleted` flag. Emails are removed with the
+  `Backend::expunge` function.
 
 ### Fixed
 

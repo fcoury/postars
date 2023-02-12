@@ -6,6 +6,8 @@ impl From<&maildir::MailEntry> for Flags {
     }
 }
 
-pub fn to_normalized_string(flags: &Flags) -> String {
-    String::from_iter(flags.iter().filter_map(<&Flag as Into<Option<char>>>::into))
+impl Flags {
+    pub fn to_normalized_string(&self) -> String {
+        String::from_iter(self.iter().filter_map(<&Flag as Into<Option<char>>>::into))
+    }
 }

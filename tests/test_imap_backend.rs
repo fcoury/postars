@@ -5,7 +5,7 @@ use std::borrow::Cow;
 
 #[cfg(feature = "imap-backend")]
 use himalaya_lib::{
-    AccountConfig, Backend, CompilerBuilder, ImapBackend, ImapConfig, TplBuilder,
+    AccountConfig, Backend, CompilerBuilder, Flag, ImapBackend, ImapConfig, TplBuilder,
     DEFAULT_INBOX_FOLDER,
 };
 
@@ -49,6 +49,7 @@ fn test_imap_backend() {
     }
 
     imap.add_folder("Sent").unwrap();
+    imap.add_folder("Trash").unwrap();
     imap.add_folder("Отправленные").unwrap();
 
     // checking that an email can be built and added
@@ -94,37 +95,70 @@ fn test_imap_backend() {
     );
 
     // checking that the envelope of the added email exists
-    let envelopes = imap.list_envelopes("Sent", 10, 0).unwrap();
-    assert_eq!(1, envelopes.len());
-    let envelope = envelopes.first().unwrap();
-    assert_eq!("alice@localhost", envelope.from.addr);
-    assert_eq!("Signed and encrypted message", envelope.subject);
+    let sent = imap.list_envelopes("Sent", 0, 0).unwrap();
+    assert_eq!(1, sent.len());
+    assert_eq!("alice@localhost", sent[0].from.addr);
+    assert_eq!("Signed and encrypted message", sent[0].subject);
 
     // checking that the email can be copied
-    imap.copy_emails("Sent", "Отправленные", vec![&envelope.id.to_string()])
+    imap.copy_emails("Sent", "Отправленные", vec![&sent[0].id])
         .unwrap();
-    let envelopes = imap.list_envelopes("Sent", 10, 0).unwrap();
-    assert_eq!(1, envelopes.len());
-    let envelopes = imap.list_envelopes("Отправленные", 10, 0).unwrap();
-    assert_eq!(1, envelopes.len());
+    let sent = imap.list_envelopes("Sent", 0, 0).unwrap();
+    let sent_ru = imap.list_envelopes("Отправленные", 0, 0).unwrap();
+    let trash = imap.list_envelopes("Trash", 0, 0).unwrap();
+    assert_eq!(1, sent.len());
+    assert_eq!(1, sent_ru.len());
+    assert_eq!(0, trash.len());
+
+    // checking that the email can be marked as deleted then expunged
+    imap.mark_emails_as_deleted("Отправленные", vec![&sent_ru[0].id])
+        .unwrap();
+    let sent = imap.list_envelopes("Sent", 0, 0).unwrap();
+    let sent_ru = imap.list_envelopes("Отправленные", 0, 0).unwrap();
+    let trash = imap.list_envelopes("Trash", 0, 0).unwrap();
+    assert_eq!(1, sent.len());
+    assert_eq!(1, sent_ru.len());
+    assert_eq!(0, trash.len());
+    assert!(sent_ru[0].flags.contains(&Flag::Deleted));
+
+    imap.expunge_folder("Отправленные").unwrap();
+    let sent_ru = imap.list_envelopes("Отправленные", 0, 0).unwrap();
+    assert_eq!(0, sent_ru.len());
 
     // checking that the email can be moved
-    imap.move_emails("Sent", "Отправленные", vec![&envelope.id.to_string()])
+    imap.move_emails("Sent", "Отправленные", vec![&sent[0].id])
         .unwrap();
-    let envelopes = imap.list_envelopes("Sent", 10, 0).unwrap();
-    assert_eq!(0, envelopes.len());
-    let envelopes = imap.list_envelopes("Отправленные", 10, 0).unwrap();
-    assert_eq!(2, envelopes.len());
-    let id = envelopes.first().unwrap().id.to_string();
+    let sent = imap.list_envelopes("Sent", 0, 0).unwrap();
+    let sent_ru = imap.list_envelopes("Отправленные", 0, 0).unwrap();
+    let trash = imap.list_envelopes("Trash", 0, 0).unwrap();
+    assert_eq!(0, sent.len());
+    assert_eq!(1, sent_ru.len());
+    assert_eq!(0, trash.len());
 
     // checking that the email can be deleted
-    imap.delete_emails("Отправленные", vec![&id]).unwrap();
-    assert!(imap.get_emails("Отправленные", vec![&id]).is_err());
+    imap.delete_emails("Отправленные", vec![&sent_ru[0].id])
+        .unwrap();
+    let sent = imap.list_envelopes("Sent", 0, 0).unwrap();
+    let sent_ru = imap.list_envelopes("Отправленные", 0, 0).unwrap();
+    let trash = imap.list_envelopes("Trash", 0, 0).unwrap();
+    assert_eq!(0, sent.len());
+    assert_eq!(0, sent_ru.len());
+    assert_eq!(1, trash.len());
+
+    imap.delete_emails("Trash", vec![&trash[0].id]).unwrap();
+    let trash = imap.list_envelopes("Trash", 0, 0).unwrap();
+    assert_eq!(1, trash.len());
+    assert!(trash[0].flags.contains(&Flag::Deleted));
+
+    imap.expunge_folder("Trash").unwrap();
+    let trash = imap.list_envelopes("Trash", 0, 0).unwrap();
+    assert_eq!(0, trash.len());
 
     // clean up
 
     imap.purge_folder("INBOX").unwrap();
     imap.delete_folder("Sent").unwrap();
+    imap.delete_folder("Trash").unwrap();
     imap.delete_folder("Отправленные").unwrap();
     imap.close().unwrap();
 }

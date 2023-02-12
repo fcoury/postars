@@ -10,7 +10,7 @@ use thiserror::Error;
 
 use crate::{
     account, backend, email, envelope, folder, id_mapper, AccountConfig, BackendConfig, Emails,
-    Envelope, Envelopes, Flags, Folders, ImapBackendBuilder, MaildirBackend, MaildirConfig,
+    Envelope, Envelopes, Flag, Flags, Folders, ImapBackendBuilder, MaildirBackend, MaildirConfig,
 };
 
 #[cfg(feature = "notmuch-backend")]
@@ -54,6 +54,7 @@ pub trait Backend: Sync + Send {
 
     fn add_folder(&self, folder: &str) -> Result<()>;
     fn list_folders(&self) -> Result<Folders>;
+    fn expunge_folder(&self, folder: &str) -> Result<()>;
     fn purge_folder(&self, folder: &str) -> Result<()>;
     fn delete_folder(&self, folder: &str) -> Result<()>;
 
@@ -105,6 +106,17 @@ pub trait Backend: Sync + Send {
         internal_ids: Vec<&str>,
     ) -> Result<()> {
         self.move_emails(from_folder, to_folder, internal_ids)
+    }
+
+    fn mark_emails_as_deleted(&self, folder: &str, ids: Vec<&str>) -> backend::Result<()> {
+        self.add_flags(folder, ids, &Flags::from_iter([Flag::Deleted]))
+    }
+    fn mark_emails_as_deleted_internal(
+        &self,
+        folder: &str,
+        internal_ids: Vec<&str>,
+    ) -> backend::Result<()> {
+        self.add_flags_internal(folder, internal_ids, &Flags::from_iter([Flag::Deleted]))
     }
 
     fn delete_emails(&self, folder: &str, ids: Vec<&str>) -> Result<()>;

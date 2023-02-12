@@ -445,6 +445,23 @@ impl<'a> Backend for ImapBackend<'a> {
         Ok(folders)
     }
 
+    fn expunge_folder(&self, folder: &str) -> backend::Result<()> {
+        info!("expunging imap folder {folder}");
+
+        let folder_encoded = encode_utf7(folder.to_owned());
+        trace!("utf7 encoded folder: {folder_encoded}");
+
+        let mut session = self.session()?;
+        session
+            .select(folder_encoded)
+            .map_err(|err| Error::SelectFolderError(err, folder.to_owned()))?;
+        session
+            .expunge()
+            .map_err(|err| Error::ExpungeFolderError(err, folder.to_owned()))?;
+
+        Ok(())
+    }
+
     fn purge_folder(&self, folder: &str) -> backend::Result<()> {
         info!("purging imap folder {folder}");
 
@@ -761,7 +778,13 @@ impl<'a> Backend for ImapBackend<'a> {
     }
 
     fn delete_emails(&self, folder: &str, uids: Vec<&str>) -> backend::Result<()> {
-        self.add_flags(folder, uids, &Flags::from_iter([Flag::Deleted]))
+        let trash_folder = self.account_config.trash_folder_alias()?;
+
+        if self.account_config.folder_alias(folder)? == trash_folder {
+            self.mark_emails_as_deleted(folder, uids)
+        } else {
+            self.move_emails(folder, &trash_folder, uids)
+        }
     }
 
     fn add_flags(&self, folder: &str, uids: Vec<&str>, flags: &Flags) -> backend::Result<()> {
@@ -781,9 +804,6 @@ impl<'a> Backend for ImapBackend<'a> {
         session
             .uid_store(&uids, format!("+FLAGS ({})", flags.to_imap_query()))
             .map_err(|err| Error::AddFlagsError(err, flags.to_imap_query(), uids))?;
-        session
-            .expunge()
-            .map_err(|err| Error::ExpungeFolderError(err, folder.to_owned()))?;
 
         Ok(())
     }
@@ -805,9 +825,6 @@ impl<'a> Backend for ImapBackend<'a> {
         session
             .uid_store(&uids, format!("FLAGS ({})", flags.to_imap_query()))
             .map_err(|err| Error::SetFlagsError(err, flags.to_imap_query(), uids))?;
-        session
-            .expunge()
-            .map_err(|err| Error::ExpungeFolderError(err, folder.to_owned()))?;
 
         Ok(())
     }
@@ -829,9 +846,6 @@ impl<'a> Backend for ImapBackend<'a> {
         session
             .uid_store(&uids, format!("-FLAGS ({})", flags.to_imap_query()))
             .map_err(|err| Error::RemoveFlagsError(err, flags.to_imap_query(), uids))?;
-        session
-            .expunge()
-            .map_err(|err| Error::ExpungeFolderError(err, folder.to_owned()))?;
 
         Ok(())
     }

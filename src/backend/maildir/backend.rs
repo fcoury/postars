@@ -17,8 +17,9 @@ use std::{
 use thiserror::Error;
 
 use crate::{
-    account, backend, email, flag::maildir::flags, AccountConfig, Backend, Emails, Envelope,
-    Envelopes, Flag, Flags, Folder, Folders, IdMapper, MaildirConfig, DEFAULT_INBOX_FOLDER,
+    account::{self, config::DEFAULT_TRASH_FOLDER},
+    backend, email, AccountConfig, Backend, Emails, Envelope, Envelopes, Flag, Flags, Folder,
+    Folders, IdMapper, MaildirConfig, DEFAULT_INBOX_FOLDER,
 };
 
 #[derive(Debug, Error)]
@@ -290,6 +291,30 @@ impl<'a> Backend for MaildirBackend<'a> {
         Ok(folders)
     }
 
+    fn expunge_folder(&self, folder: &str) -> backend::Result<()> {
+        info!("expunging maildir folder {}", folder);
+
+        let mdir = self.get_mdir_from_dir(folder)?;
+        let entries = mdir
+            .list_cur()
+            .map(|entry| entry.map_err(Error::GetSubdirEntryError))
+            .collect::<Result<Vec<_>>>()?;
+        entries
+            .iter()
+            .filter_map(|entry| {
+                if entry.is_trashed() {
+                    Some(entry.id())
+                } else {
+                    None
+                }
+            })
+            .try_for_each(|internal_id| {
+                mdir.delete(internal_id).map_err(Error::DeleteEmailError)
+            })?;
+
+        Ok(())
+    }
+
     fn purge_folder(&self, folder: &str) -> backend::Result<()> {
         info!("purging maildir folder {}", folder);
 
@@ -418,7 +443,7 @@ impl<'a> Backend for MaildirBackend<'a> {
 
         let mdir = self.get_mdir_from_dir(folder)?;
         let internal_id = mdir
-            .store_cur_with_flags(email, &flags::to_normalized_string(&flags))
+            .store_cur_with_flags(email, &flags.to_normalized_string())
             .map_err(Error::StoreWithFlagsError)?;
         let id = self.id_mapper(folder)?.insert(internal_id)?;
 
@@ -438,7 +463,7 @@ impl<'a> Backend for MaildirBackend<'a> {
 
         let mdir = self.get_mdir_from_dir(folder)?;
         let internal_id = mdir
-            .store_cur_with_flags(email, &flags::to_normalized_string(&flags))
+            .store_cur_with_flags(email, &flags.to_normalized_string())
             .map_err(Error::StoreWithFlagsError)?;
         self.id_mapper(folder)?.insert(&internal_id)?;
 
@@ -660,20 +685,13 @@ impl<'a> Backend for MaildirBackend<'a> {
             ids = ids.join(", "),
         );
 
-        let mdir = self.get_mdir_from_dir(folder)?;
-        let id_mapper = self.id_mapper(folder)?;
-        let internal_ids: Vec<String> = ids
-            .iter()
-            .map(|id| Ok(id_mapper.get_internal_id(id)?))
-            .collect::<Result<_>>()?;
-        let internal_ids: Vec<&str> = internal_ids.iter().map(String::as_str).collect();
-        trace!("internal ids: {:#?}", internal_ids);
+        let trash_folder = self.account_config.trash_folder_alias()?;
 
-        internal_ids.iter().try_for_each(|internal_id| {
-            mdir.delete(&internal_id).map_err(Error::DeleteEmailError)
-        })?;
-
-        Ok(())
+        if self.account_config.folder_alias(folder)? == trash_folder {
+            self.mark_emails_as_deleted(folder, ids)
+        } else {
+            self.move_emails(&folder, DEFAULT_TRASH_FOLDER, ids)
+        }
     }
 
     fn delete_emails_internal(&self, folder: &str, internal_ids: Vec<&str>) -> backend::Result<()> {
@@ -682,13 +700,13 @@ impl<'a> Backend for MaildirBackend<'a> {
             ids = internal_ids.join(", "),
         );
 
-        let mdir = self.get_mdir_from_dir(folder)?;
+        let trash_folder = self.account_config.trash_folder_alias()?;
 
-        internal_ids.iter().try_for_each(|internal_id| {
-            mdir.delete(&internal_id).map_err(Error::DeleteEmailError)
-        })?;
-
-        Ok(())
+        if self.account_config.folder_alias(folder)? == trash_folder {
+            self.add_flags_internal(folder, internal_ids, &Flags::from_iter([Flag::Deleted]))
+        } else {
+            self.move_emails_internal(folder, DEFAULT_TRASH_FOLDER, internal_ids)
+        }
     }
 
     fn add_flags(&self, folder: &str, ids: Vec<&str>, flags: &Flags) -> backend::Result<()> {
@@ -708,7 +726,7 @@ impl<'a> Backend for MaildirBackend<'a> {
         trace!("internal ids: {:#?}", internal_ids);
 
         internal_ids.iter().try_for_each(|internal_id| {
-            mdir.add_flags(&internal_id, &flags::to_normalized_string(&flags))
+            mdir.add_flags(&internal_id, &flags.to_normalized_string())
                 .map_err(Error::AddFlagsError)
         })?;
 
@@ -730,7 +748,7 @@ impl<'a> Backend for MaildirBackend<'a> {
         let mdir = self.get_mdir_from_dir(folder)?;
 
         internal_ids.iter().try_for_each(|internal_id| {
-            mdir.add_flags(&internal_id, &flags::to_normalized_string(&flags))
+            mdir.add_flags(&internal_id, &flags.to_normalized_string())
                 .map_err(Error::AddFlagsError)
         })?;
 
@@ -754,7 +772,7 @@ impl<'a> Backend for MaildirBackend<'a> {
         trace!("internal ids: {:#?}", internal_ids);
 
         internal_ids.iter().try_for_each(|internal_id| {
-            mdir.set_flags(&internal_id, &flags::to_normalized_string(&flags))
+            mdir.set_flags(&internal_id, &flags.to_normalized_string())
                 .map_err(Error::SetFlagsError)
         })?;
 
@@ -776,7 +794,7 @@ impl<'a> Backend for MaildirBackend<'a> {
         let mdir = self.get_mdir_from_dir(folder)?;
 
         internal_ids.iter().try_for_each(|internal_id| {
-            mdir.set_flags(&internal_id, &flags::to_normalized_string(&flags))
+            mdir.set_flags(&internal_id, &flags.to_normalized_string())
                 .map_err(Error::SetFlagsError)
         })?;
 
@@ -800,7 +818,7 @@ impl<'a> Backend for MaildirBackend<'a> {
         trace!("internal ids: {:#?}", internal_ids);
 
         internal_ids.iter().try_for_each(|internal_id| {
-            mdir.remove_flags(&internal_id, &flags::to_normalized_string(&flags))
+            mdir.remove_flags(&internal_id, &flags.to_normalized_string())
                 .map_err(Error::RemoveFlagsError)
         })?;
 
@@ -822,7 +840,7 @@ impl<'a> Backend for MaildirBackend<'a> {
         let mdir = self.get_mdir_from_dir(folder)?;
 
         internal_ids.iter().try_for_each(|internal_id| {
-            mdir.remove_flags(&internal_id, &flags::to_normalized_string(&flags))
+            mdir.remove_flags(&internal_id, &flags.to_normalized_string())
                 .map_err(Error::RemoveFlagsError)
         })?;
 
