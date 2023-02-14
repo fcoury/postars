@@ -42,6 +42,7 @@ fn test_sync() {
     // set up folders
 
     imap.add_folder("[Gmail]/Sent").unwrap();
+    imap.add_folder("Trash").unwrap();
 
     // add three emails to folder INBOX with delay (in order to have a
     // different date)
@@ -194,13 +195,39 @@ fn test_sync() {
 
     let mut conn = rusqlite::Connection::open(sync_dir.join(".sync.sqlite")).unwrap();
 
-    let local_folders_cached =
-        folder::sync::Cache::list_local_folders(&mut conn, &account.name).unwrap();
+    let local_folders_cached = folder::sync::Cache::list_local_folders(
+        &mut conn,
+        &account.name,
+        Some(&vec!["[Gmail]/Sent".into()]),
+    )
+    .unwrap();
+    assert!(!local_folders_cached.contains("INBOX"));
+    assert!(local_folders_cached.contains("[Gmail]/Sent"));
+
+    let local_folders_cached = folder::sync::Cache::list_local_folders(
+        &mut conn,
+        &account.name,
+        Option::<Vec<String>>::None,
+    )
+    .unwrap();
     assert!(local_folders_cached.contains("INBOX"));
     assert!(local_folders_cached.contains("[Gmail]/Sent"));
 
-    let remote_folders_cached =
-        folder::sync::Cache::list_remote_folders(&mut conn, &account.name).unwrap();
+    let remote_folders_cached = folder::sync::Cache::list_remote_folders(
+        &mut conn,
+        &account.name,
+        Some(&vec!["[Gmail]/Sent".into()]),
+    )
+    .unwrap();
+    assert!(!remote_folders_cached.contains("INBOX"));
+    assert!(remote_folders_cached.contains("[Gmail]/Sent"));
+
+    let remote_folders_cached = folder::sync::Cache::list_remote_folders(
+        &mut conn,
+        &account.name,
+        Option::<Vec<String>>::None,
+    )
+    .unwrap();
     assert!(remote_folders_cached.contains("INBOX"));
     assert!(remote_folders_cached.contains("[Gmail]/Sent"));
 
@@ -235,6 +262,7 @@ fn test_sync() {
         &Flags::from_iter([Flag::Draft]),
     )
     .unwrap();
+    imap.expunge_folder("INBOX").unwrap();
     mdir.delete_emails_internal("INBOX", vec![&mdir_inbox_envelopes[2].internal_id])
         .unwrap();
     mdir.add_flags_internal(
@@ -243,11 +271,12 @@ fn test_sync() {
         &Flags::from_iter([Flag::Flagged, Flag::Answered]),
     )
     .unwrap();
+    mdir.expunge_folder("INBOX").unwrap();
 
     let report = sync_builder.sync(&imap).unwrap();
     assert_eq!(
         report.folders,
-        HashSet::from_iter(["INBOX".into(), "[Gmail]/Sent".into()])
+        HashSet::from_iter(["INBOX".into(), "[Gmail]/Sent".into(), "Trash".into()])
     );
 
     let imap_envelopes = imap.list_envelopes("INBOX", 0, 0).unwrap();
@@ -266,5 +295,6 @@ fn test_sync() {
 
     imap.purge_folder("INBOX").unwrap();
     imap.delete_folder("[Gmail]/Sent").unwrap();
+    imap.delete_folder("Trash").unwrap();
     imap.close().unwrap();
 }

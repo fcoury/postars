@@ -1,11 +1,13 @@
-use crate::Flags;
+use crate::{Flag, Flags};
 
-use super::flag;
-
-pub fn from_raw(entry: &maildir::MailEntry) -> Flags {
-    entry.flags().chars().map(flag::from_char).collect()
+impl From<&maildir::MailEntry> for Flags {
+    fn from(entry: &maildir::MailEntry) -> Self {
+        entry.flags().chars().map(Flag::from).collect()
+    }
 }
 
-pub fn to_normalized_string(flags: &Flags) -> String {
-    String::from_iter(flags.iter().filter_map(flag::to_normalized_char))
+impl Flags {
+    pub fn to_normalized_string(&self) -> String {
+        String::from_iter(self.iter().filter_map(<&Flag as Into<Option<char>>>::into))
+    }
 }

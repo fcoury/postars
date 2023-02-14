@@ -46,6 +46,8 @@ pub enum Error {
     // Envelopes
     #[error("cannot get imap envelope of email {0}")]
     GetEnvelopeError(String),
+    #[error("cannot list imap envelopes: page {0} out of bounds")]
+    ListEnvelopesOutOfBounds(usize),
     #[error("cannot fetch new imap envelopes")]
     FetchNewEnvelopesError(#[source] imap::Error),
     #[error("cannot search new imap envelopes")]
@@ -443,6 +445,23 @@ impl<'a> Backend for ImapBackend<'a> {
         Ok(folders)
     }
 
+    fn expunge_folder(&self, folder: &str) -> backend::Result<()> {
+        info!("expunging imap folder {folder}");
+
+        let folder_encoded = encode_utf7(folder.to_owned());
+        trace!("utf7 encoded folder: {folder_encoded}");
+
+        let mut session = self.session()?;
+        session
+            .select(folder_encoded)
+            .map_err(|err| Error::SelectFolderError(err, folder.to_owned()))?;
+        session
+            .expunge()
+            .map_err(|err| Error::ExpungeFolderError(err, folder.to_owned()))?;
+
+        Ok(())
+    }
+
     fn purge_folder(&self, folder: &str) -> backend::Result<()> {
         info!("purging imap folder {folder}");
 
@@ -525,18 +544,27 @@ impl<'a> Backend for ImapBackend<'a> {
             return Ok(Envelopes::default());
         }
 
-        let range = if page_size > 0 {
-            let begin = folder_size.min(page * page_size + 1);
-            let end = begin + folder_size.min(page_size);
-            (begin..end).fold(String::new(), |range, seq| {
-                if range.is_empty() {
-                    seq.to_string()
-                } else {
-                    range + "," + &seq.to_string()
-                }
-            })
-        } else {
+        let page_cursor = page * page_size;
+        if page_cursor >= folder_size {
+            return Err(Error::ListEnvelopesOutOfBounds(page + 1))?;
+        }
+
+        let range = if page_size == 0 {
             String::from("1:*")
+        } else {
+            let page_size = page_size.min(folder_size);
+            let mut count = 1;
+            let mut cursor = folder_size - (folder_size.min(page_cursor));
+            let mut range = cursor.to_string();
+            while cursor > 0 && count < page_size {
+                count += 1;
+                cursor -= 1;
+                if count > 1 {
+                    range.push(',');
+                }
+                range.push_str(&cursor.to_string());
+            }
+            range
         };
         trace!("page: {page}");
         trace!("page size: {page_size}");
@@ -750,7 +778,13 @@ impl<'a> Backend for ImapBackend<'a> {
     }
 
     fn delete_emails(&self, folder: &str, uids: Vec<&str>) -> backend::Result<()> {
-        self.add_flags(folder, uids, &Flags::from_iter([Flag::Deleted]))
+        let trash_folder = self.account_config.trash_folder_alias()?;
+
+        if self.account_config.folder_alias(folder)? == trash_folder {
+            self.mark_emails_as_deleted(folder, uids)
+        } else {
+            self.move_emails(folder, &trash_folder, uids)
+        }
     }
 
     fn add_flags(&self, folder: &str, uids: Vec<&str>, flags: &Flags) -> backend::Result<()> {
@@ -770,9 +804,6 @@ impl<'a> Backend for ImapBackend<'a> {
         session
             .uid_store(&uids, format!("+FLAGS ({})", flags.to_imap_query()))
             .map_err(|err| Error::AddFlagsError(err, flags.to_imap_query(), uids))?;
-        session
-            .expunge()
-            .map_err(|err| Error::ExpungeFolderError(err, folder.to_owned()))?;
 
         Ok(())
     }
@@ -794,9 +825,6 @@ impl<'a> Backend for ImapBackend<'a> {
         session
             .uid_store(&uids, format!("FLAGS ({})", flags.to_imap_query()))
             .map_err(|err| Error::SetFlagsError(err, flags.to_imap_query(), uids))?;
-        session
-            .expunge()
-            .map_err(|err| Error::ExpungeFolderError(err, folder.to_owned()))?;
 
         Ok(())
     }
@@ -818,9 +846,6 @@ impl<'a> Backend for ImapBackend<'a> {
         session
             .uid_store(&uids, format!("-FLAGS ({})", flags.to_imap_query()))
             .map_err(|err| Error::RemoveFlagsError(err, flags.to_imap_query(), uids))?;
-        session
-            .expunge()
-            .map_err(|err| Error::ExpungeFolderError(err, folder.to_owned()))?;
 
         Ok(())
     }

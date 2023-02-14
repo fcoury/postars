@@ -10,11 +10,8 @@ use thiserror::Error;
 
 use crate::{
     account, backend, email, envelope, folder, id_mapper, AccountConfig, BackendConfig, Emails,
-    Envelope, Envelopes, Flags, Folders, ImapBackendBuilder, MaildirConfig,
+    Envelope, Envelopes, Flag, Flags, Folders, ImapBackendBuilder, MaildirBackend, MaildirConfig,
 };
-
-#[cfg(feature = "maildir-backend")]
-use crate::MaildirBackend;
 
 #[cfg(feature = "notmuch-backend")]
 use crate::NotmuchBackend;
@@ -43,7 +40,6 @@ pub enum Error {
     #[cfg(feature = "imap-backend")]
     #[error(transparent)]
     ImapBackendError(#[from] backend::imap::Error),
-    #[cfg(feature = "maildir-backend")]
     #[error(transparent)]
     MaildirBackendError(#[from] backend::maildir::Error),
     #[cfg(feature = "notmuch-backend")]
@@ -58,6 +54,7 @@ pub trait Backend: Sync + Send {
 
     fn add_folder(&self, folder: &str) -> Result<()>;
     fn list_folders(&self) -> Result<Folders>;
+    fn expunge_folder(&self, folder: &str) -> Result<()>;
     fn purge_folder(&self, folder: &str) -> Result<()>;
     fn delete_folder(&self, folder: &str) -> Result<()>;
 
@@ -109,6 +106,17 @@ pub trait Backend: Sync + Send {
         internal_ids: Vec<&str>,
     ) -> Result<()> {
         self.move_emails(from_folder, to_folder, internal_ids)
+    }
+
+    fn mark_emails_as_deleted(&self, folder: &str, ids: Vec<&str>) -> backend::Result<()> {
+        self.add_flags(folder, ids, &Flags::from_iter([Flag::Deleted]))
+    }
+    fn mark_emails_as_deleted_internal(
+        &self,
+        folder: &str,
+        internal_ids: Vec<&str>,
+    ) -> backend::Result<()> {
+        self.add_flags_internal(folder, internal_ids, &Flags::from_iter([Flag::Deleted]))
     }
 
     fn delete_emails(&self, folder: &str, ids: Vec<&str>) -> Result<()>;
@@ -209,6 +217,7 @@ pub struct BackendSyncReport {
 pub struct BackendSyncBuilder<'a> {
     account_config: &'a AccountConfig,
     on_progress: Box<dyn Fn(BackendSyncProgressEvent) -> Result<()> + Sync + Send + 'a>,
+    folders: Option<Vec<String>>,
     dry_run: bool,
 }
 
@@ -217,6 +226,7 @@ impl<'a> BackendSyncBuilder<'a> {
         Self {
             account_config,
             on_progress: Box::new(|_| Ok(())),
+            folders: None,
             dry_run: false,
         }
     }
@@ -226,6 +236,39 @@ impl<'a> BackendSyncBuilder<'a> {
         F: Fn(BackendSyncProgressEvent) -> Result<()> + Sync + Send + 'a,
     {
         self.on_progress = Box::new(f);
+        self
+    }
+
+    pub fn all_folders(mut self) -> Self {
+        self.folders = None;
+        self
+    }
+
+    pub fn only_folder<F>(mut self, folder: F) -> Self
+    where
+        F: ToString,
+    {
+        self.folders = match self.folders {
+            None => Some(vec![folder.to_string()]),
+            Some(mut folders) => {
+                folders.push(folder.to_string());
+                Some(folders)
+            }
+        };
+        self
+    }
+
+    pub fn only_folders<F, I>(mut self, folders: I) -> Self
+    where
+        F: ToString,
+        I: IntoIterator<Item = F>,
+    {
+        self.folders = Some(
+            folders
+                .into_iter()
+                .map(|folder| folder.to_string())
+                .collect::<Vec<_>>(),
+        );
         self
     }
 
@@ -265,6 +308,7 @@ impl<'a> BackendSyncBuilder<'a> {
 
         let folders_sync_report = folder::SyncBuilder::new(self.account_config)
             .on_progress(|data| Ok(progress(data).map_err(Box::new)?))
+            .folders(self.folders.clone())
             .dry_run(self.dry_run)
             .sync(&mut conn, &local, remote)?;
 
@@ -287,6 +331,9 @@ impl<'a> BackendSyncBuilder<'a> {
             if let Some(err) = report.cache_patch.1 {
                 envelopes_cache_patch.1.push(err);
             }
+
+            local.expunge_folder(folder)?;
+            remote.expunge_folder(folder)?;
         }
 
         drop(guard);
@@ -343,7 +390,6 @@ impl<'a> BackendBuilder {
                     root_dir: account_config.sync_dir()?,
                 }),
             )?)),
-            #[cfg(feature = "maildir-backend")]
             BackendConfig::Maildir(maildir_config) => Ok(Box::new(MaildirBackend::new(
                 Cow::Borrowed(account_config),
                 Cow::Borrowed(maildir_config),

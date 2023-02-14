@@ -21,10 +21,17 @@ const DELETE_FOLDER: &str = "
     AND name = ?
 ";
 
+const SELECT_ALL_FOLDERS: &str = "
+    SELECT name
+    FROM folders
+    WHERE account = ?
+";
+
 const SELECT_FOLDERS: &str = "
     SELECT name
     FROM folders
     WHERE account = ?
+    AND name IN (?)
 ";
 
 pub struct Cache;
@@ -37,11 +44,11 @@ impl Cache {
         Ok(())
     }
 
-    fn list_folders<A>(conn: &mut rusqlite::Connection, account: A) -> Result<FoldersName>
+    fn list_all_folders<A>(conn: &mut rusqlite::Connection, account: A) -> Result<FoldersName>
     where
         A: AsRef<str>,
     {
-        let mut stmt = conn.prepare(SELECT_FOLDERS)?;
+        let mut stmt = conn.prepare(SELECT_ALL_FOLDERS)?;
         let folders: Vec<String> = stmt
             .query_map([account.as_ref()], |row| row.get(0))?
             .collect::<rusqlite::Result<_>>()?;
@@ -49,21 +56,56 @@ impl Cache {
         Ok(FoldersName::from_iter(folders))
     }
 
-    pub fn list_local_folders<A>(conn: &mut rusqlite::Connection, account: A) -> Result<FoldersName>
-    where
-        A: ToString,
-    {
-        Self::list_folders(conn, account.to_string() + Self::LOCAL_SUFFIX)
-    }
-
-    pub fn list_remote_folders<A>(
+    fn list_folders<A, F>(
         conn: &mut rusqlite::Connection,
         account: A,
+        folders: F,
     ) -> Result<FoldersName>
     where
         A: AsRef<str>,
+        F: AsRef<Vec<String>>,
     {
-        Self::list_folders(conn, account)
+        // let folders = format!("({})", folders.as_ref().join(","));
+        let mut stmt = conn.prepare(SELECT_FOLDERS)?;
+        let folders: Vec<String> = stmt
+            .query_map([account.as_ref(), &folders.as_ref().join(",")], |row| {
+                row.get(0)
+            })?
+            .collect::<rusqlite::Result<_>>()?;
+
+        Ok(FoldersName::from_iter(folders))
+    }
+
+    pub fn list_local_folders<A, F>(
+        conn: &mut rusqlite::Connection,
+        account: A,
+        folders: Option<F>,
+    ) -> Result<FoldersName>
+    where
+        A: ToString,
+        F: AsRef<Vec<String>>,
+    {
+        match folders {
+            None => Self::list_all_folders(conn, account.to_string() + Self::LOCAL_SUFFIX),
+            Some(folders) => {
+                Self::list_folders(conn, account.to_string() + Self::LOCAL_SUFFIX, folders)
+            }
+        }
+    }
+
+    pub fn list_remote_folders<A, F>(
+        conn: &mut rusqlite::Connection,
+        account: A,
+        folders: Option<F>,
+    ) -> Result<FoldersName>
+    where
+        A: AsRef<str>,
+        F: AsRef<Vec<String>>,
+    {
+        match folders {
+            None => Self::list_all_folders(conn, account),
+            Some(folders) => Self::list_folders(conn, account, folders),
+        }
     }
 
     fn insert_folder<A, F>(tx: &rusqlite::Transaction, account: A, folder: F) -> Result<()>

@@ -18,6 +18,7 @@ pub const DEFAULT_SIGNATURE_DELIM: &str = "-- \n";
 pub const DEFAULT_INBOX_FOLDER: &str = "INBOX";
 pub const DEFAULT_SENT_FOLDER: &str = "Sent";
 pub const DEFAULT_DRAFTS_FOLDER: &str = "Drafts";
+pub const DEFAULT_TRASH_FOLDER: &str = "Trash";
 
 #[derive(Debug, Error)]
 pub enum Error {
@@ -189,6 +190,10 @@ impl AccountConfig {
 
     pub fn sent_folder_alias(&self) -> Result<String> {
         self.folder_alias(DEFAULT_SENT_FOLDER)
+    }
+
+    pub fn trash_folder_alias(&self) -> Result<String> {
+        self.folder_alias(DEFAULT_TRASH_FOLDER)
     }
 
     pub fn email_listing_page_size(&self) -> usize {

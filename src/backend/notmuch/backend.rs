@@ -59,6 +59,8 @@ pub enum Error {
     AddMboxUnimplementedError,
     #[error("cannot purge notmuch folder: feature not implemented")]
     PurgeFolderUnimplementedError,
+    #[error("cannot expunge notmuch folder: feature not implemented")]
+    ExpungeFolderUnimplementedError,
     #[error("cannot delete notmuch mailbox: feature not implemented")]
     DeleteFolderUnimplementedError,
     #[error("cannot copy notmuch message: feature not implemented")]
@@ -205,8 +207,12 @@ impl<'a> Backend for NotmuchBackend<'a> {
         Ok(mboxes)
     }
 
-    fn purge_folder(&self, _folder: &str) -> backend::Result<()> {
+    fn expunge_folder(&self, _folder: &str) -> backend::Result<()> {
         Err(Error::PurgeFolderUnimplementedError)?
+    }
+
+    fn purge_folder(&self, _folder: &str) -> backend::Result<()> {
+        Err(Error::ExpungeFolderUnimplementedError)?
     }
 
     fn delete_folder(&self, _folder: &str) -> backend::Result<()> {

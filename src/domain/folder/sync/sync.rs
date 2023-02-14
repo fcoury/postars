@@ -67,22 +67,19 @@ pub struct SyncReport {
 
 pub struct SyncBuilder<'a> {
     account_config: &'a AccountConfig,
-    dry_run: bool,
     on_progress: Box<dyn Fn(BackendSyncProgressEvent) -> Result<()> + Sync + Send + 'a>,
+    folders: Option<Vec<String>>,
+    dry_run: bool,
 }
 
 impl<'a> SyncBuilder<'a> {
     pub fn new(account_config: &'a AccountConfig) -> Self {
         Self {
             account_config,
-            dry_run: false,
             on_progress: Box::new(|_| Ok(())),
+            folders: None,
+            dry_run: false,
         }
-    }
-
-    pub fn dry_run(mut self, dry_run: bool) -> Self {
-        self.dry_run = dry_run;
-        self
     }
 
     pub fn on_progress<F>(mut self, f: F) -> Self
@@ -100,6 +97,25 @@ impl<'a> SyncBuilder<'a> {
         }
     }
 
+    pub fn folders<F, I>(mut self, folders: Option<I>) -> Self
+    where
+        F: ToString,
+        I: IntoIterator<Item = F>,
+    {
+        self.folders = folders.map(|folders| {
+            folders
+                .into_iter()
+                .map(|folder| folder.to_string())
+                .collect::<Vec<_>>()
+        });
+        self
+    }
+
+    pub fn dry_run(mut self, dry_run: bool) -> Self {
+        self.dry_run = dry_run;
+        self
+    }
+
     pub fn sync(
         &self,
         conn: &mut rusqlite::Connection,
@@ -111,8 +127,11 @@ impl<'a> SyncBuilder<'a> {
 
         self.try_progress(BackendSyncProgressEvent::GetLocalCachedFolders);
 
-        let local_folders_cached: FoldersName =
-            HashSet::from_iter(Cache::list_local_folders(conn, account)?.iter().cloned());
+        let local_folders_cached: FoldersName = HashSet::from_iter(
+            Cache::list_local_folders(conn, account, self.folders.as_ref())?
+                .iter()
+                .cloned(),
+        );
 
         trace!("local folders cached: {:#?}", local_folders_cached);
 
@@ -123,15 +142,32 @@ impl<'a> SyncBuilder<'a> {
                 .list_folders()
                 .map_err(Box::new)?
                 .iter()
-                .map(|folder| folder.name.clone()),
+                // TODO: instead of fetching all the folders then
+                // filtering them here, it could be better to filter
+                // them at the source directly, which implies to add a
+                // new backend fn called `search_folders` and to set
+                // up a common search API across backends.
+                .filter_map(|folder| match &self.folders {
+                    None => Some(folder.name.clone()),
+                    Some(folders) => {
+                        if folders.contains(&folder.name) {
+                            Some(folder.name.clone())
+                        } else {
+                            None
+                        }
+                    }
+                }),
         );
 
         trace!("local folders: {:#?}", local_folders);
 
         self.try_progress(BackendSyncProgressEvent::GetRemoteCachedFolders);
 
-        let remote_folders_cached: FoldersName =
-            HashSet::from_iter(Cache::list_remote_folders(conn, account)?.iter().cloned());
+        let remote_folders_cached: FoldersName = HashSet::from_iter(
+            Cache::list_remote_folders(conn, account, self.folders.as_ref())?
+                .iter()
+                .cloned(),
+        );
 
         trace!("remote folders cached: {:#?}", remote_folders_cached);
 
@@ -142,7 +178,21 @@ impl<'a> SyncBuilder<'a> {
                 .list_folders()
                 .map_err(Box::new)?
                 .iter()
-                .map(|folder| folder.name.clone()),
+                // TODO: instead of fetching all the folders then
+                // filtering them here, it could be better to filter
+                // them at the source directly, which implies to add a
+                // new backend fn called `search_folders` and to set
+                // up a common search API across backends.
+                .filter_map(|folder| match &self.folders {
+                    None => Some(folder.name.clone()),
+                    Some(folders) => {
+                        if folders.contains(&folder.name) {
+                            Some(folder.name.clone())
+                        } else {
+                            None
+                        }
+                    }
+                }),
         );
 
         trace!("remote folders: {:#?}", remote_folders);

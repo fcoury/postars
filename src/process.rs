@@ -49,9 +49,9 @@ pub fn pipe(cmd: &str, input: &[u8]) -> Result<(Vec<u8>, usize)> {
     let mut output = Vec::new();
 
     let windows = cfg!(target_os = "windows")
-        && env::var("MSYSTEM")
-            .map(|env| !env.starts_with("MINGW"))
-            .unwrap_or_default();
+        && !(env::var("MSYSTEM")
+            .map(|env| env.starts_with("MINGW"))
+            .unwrap_or_default());
 
     let pipeline = if windows {
         Command::new("cmd")

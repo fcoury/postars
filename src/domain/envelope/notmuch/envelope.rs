@@ -25,11 +25,6 @@ pub fn from_raw(raw: RawEnvelope) -> Result<Envelope> {
         .map_err(|err| Error::ParseMsgHeaderError(err, String::from("subject")))?
         .unwrap_or_default()
         .to_string();
-    let message_id = raw
-        .header("message-id")
-        .map_err(|err| Error::ParseMsgHeaderError(err, String::from("message-id")))?
-        .unwrap_or_default()
-        .to_string();
     let from = {
         let from = raw
             .header("from")
@@ -60,6 +55,11 @@ pub fn from_raw(raw: RawEnvelope) -> Result<Envelope> {
             .and_then(|date| date.and_local_timezone(Local).earliest());
         date.unwrap_or_default()
     };
+    let message_id = raw
+        .header("message-id")
+        .map_err(|err| Error::ParseMsgHeaderError(err, String::from("message-id")))?
+        .unwrap_or_else(|| date.to_rfc3339().into())
+        .to_string();
 
     let envelope = Envelope {
         id: String::new(),
