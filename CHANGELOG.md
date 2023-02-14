@@ -11,15 +11,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-* Added ability to synchronize specific folders only [#37].
-* Added `Backend::expunge` function that definitely removes emails
+- Added ability to synchronize specific folders only [#37].
+- Added `Backend::expunge` function that definitely removes emails
   with the `Deleted` flag.
-* Added `Backend::mark_emails_as_deleted` function with a default
+- Added `Backend::mark_emails_as_deleted` function with a default
   implementation that adds the `Deleted` flag.
 
 ### Changed
 
-* Changed the way emails are deleted. `Backend::delete_emails` now
+- Changed the way emails are deleted. `Backend::delete_emails` now
   moves the email to the `Trash` folder (or to the corresponding alias
   from the config file). If the target folder is the `Trash` folder,
   it will instead add the `Deleted` flag. Emails are removed with the
@@ -27,147 +27,147 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-* Fixed `ImapBackend::list_envelopes` pagination.
-* Fixed synchronization issues for emails without `Message-ID` header
+- Fixed `ImapBackend::list_envelopes` pagination.
+- Fixed synchronization issues for emails without `Message-ID` header
   by using the `Date` header instead.
-* Fixed maildir backend perfs issues by enabling the `mmap` feature of
+- Fixed maildir backend perfs issues by enabling the `mmap` feature of
   the `maildir` crate.
   
 ### Removed
 
-* Removed the `maildir-backend` cargo feature, it is now included by
+- Removed the `maildir-backend` cargo feature, it is now included by
   default.
 
 ## [0.5.1] - 2023-02-08
 
 ### Fixed
 
-* Fixed `notmuch` backend compilation error on rustc `v1.67+`.
+- Fixed `notmuch` backend compilation error on rustc `v1.67+`.
 
 ## [0.5.0] - 2023-02-07
 
 ### Added
 
-* Made backend functions accept a vector of id instead of a single id
+- Made backend functions accept a vector of id instead of a single id
   [#20].
-* Added function `Backend::purge_folder` that removes all emails
+- Added function `Backend::purge_folder` that removes all emails
   inside a folder.
-* Added new `Backend` functions using the internal id:
-  * `get_envelope_internal`: gets an envelope by its internal id
-  * `add_email_internal`: adds an email and returns its internal id
-  * `get_emails_internal`: gets emails by their internal id
-  * `copy_emails_internal`: copies emails by their internal id
-  * `move_emails_internal`: copies emails by their internal id
-  * `delete_emails_internal`: copies emails by their internal id
-  * `add_flags_internal`: adds emails flags by their internal id
-  * `set_flags_internal`: set emails flags by their internal id
-  * `remove_flags_internal`: removes emails flags by their internal id
-* Added emails synchronization feature. Backends that implement the
+- Added new `Backend` functions using the internal id:
+  - `get_envelope_internal`: gets an envelope by its internal id
+  - `add_email_internal`: adds an email and returns its internal id
+  - `get_emails_internal`: gets emails by their internal id
+  - `copy_emails_internal`: copies emails by their internal id
+  - `move_emails_internal`: copies emails by their internal id
+  - `delete_emails_internal`: copies emails by their internal id
+  - `add_flags_internal`: adds emails flags by their internal id
+  - `set_flags_internal`: set emails flags by their internal id
+  - `remove_flags_internal`: removes emails flags by their internal id
+- Added emails synchronization feature. Backends that implement the
   `ThreadSafeBackend` trait inherit the `sync` function that
   synchronizes all folders and emails with a local `Maildir` instance.
-* Added `Backend::sync` function and link `ThreadSafeBackend::sync` to
+- Added `Backend::sync` function and link `ThreadSafeBackend::sync` to
   it for the IMAP and the Maildir backends.
-* Added the ability to URL encode Maildir folders (in order to fix
+- Added the ability to URL encode Maildir folders (in order to fix
   path collisions, for eg `[Gmail]/Sent`). Also added a
   `MaildirBackendBuilder` to facilitate the usage of the
   `url_encoded_folders` option.
-* Added a process lock for `ThreadSafeBackend::sync`, this way only
+- Added a process lock for `ThreadSafeBackend::sync`, this way only
   one synchronization can be performed at a time (for a same account).
 
 ### Fixed
 
-* Used native IMAP commands `copy` and `mv`.
-* Fixed maildir date envelope parsing.
-* Fixed inline attachments not collected.
+- Used native IMAP commands `copy` and `mv`.
+- Fixed maildir date envelope parsing.
+- Fixed inline attachments not collected.
 
 ### Changed
 
-* Improved `Backend` method names. Also replaced the `self mut` by a
+- Improved `Backend` method names. Also replaced the `self mut` by a
   `RefCell`.
-* Simplified the `Email` struct: there is no custom implementation
+- Simplified the `Email` struct: there is no custom implementation
   with custom fields. Now, the `Email` struct is just a wrapper around
   `mailparse::ParsedMail`.
-* Improved `Flag` structures.
-* Changed `Backend` trait functions due to [#20]:
-  * `list_envelope` => `list_envelopes`
-  * `search_envelope` => `search_envelopes`
-  * `get_email` => `get_emails`, takes now `ids: Vec<&str>` and
+- Improved `Flag` structures.
+- Changed `Backend` trait functions due to [#20]:
+  - `list_envelope` => `list_envelopes`
+  - `search_envelope` => `search_envelopes`
+  - `get_email` => `get_emails`, takes now `ids: Vec<&str>` and
     returns an `Emails` structure instead of an `Email`)
-  * `copy_email` => `copy_emails`, takes now `ids: Vec<&str>`.
-  * `move_email` => `move_emails`, takes now `ids: Vec<&str>`.
-  * `delete_email` => `delete_emails`, takes now `ids: Vec<&str>`.
-  * `add_flags` takes now `ids: Vec<&str>` and `flags: &Flags`.
-  * `set_flags` takes now `ids: Vec<&str>` and `flags: &Flags`.
-  * `remove_flags` takes now `ids: Vec<&str>` and `flags: &Flags`.
+  - `copy_email` => `copy_emails`, takes now `ids: Vec<&str>`.
+  - `move_email` => `move_emails`, takes now `ids: Vec<&str>`.
+  - `delete_email` => `delete_emails`, takes now `ids: Vec<&str>`.
+  - `add_flags` takes now `ids: Vec<&str>` and `flags: &Flags`.
+  - `set_flags` takes now `ids: Vec<&str>` and `flags: &Flags`.
+  - `remove_flags` takes now `ids: Vec<&str>` and `flags: &Flags`.
 
 ### Removed
 
-* The `email::Tpl` structure moved to its [own
+- The `email::Tpl` structure moved to its [own
   repository](https://git.sr.ht/~soywod/mime-msg-builder).
-* Encryption and signed moved with the `email::Tpl` in its own
+- Encryption and signed moved with the `email::Tpl` in its own
   repository.
 
 ## [0.4.0] - 2022-10-12
 
 ### Added
 
-* Added pipe support for `(imap|smtp)-passwd-cmd`.
-* Added `imap-ssl` and `smtp-ssl` options to be able to disable
+- Added pipe support for `(imap|smtp)-passwd-cmd`.
+- Added `imap-ssl` and `smtp-ssl` options to be able to disable
   encryption.
-* Implemented sendmail sender.
-* Fixed `process` module for `MINGW*`.
+- Implemented sendmail sender.
+- Fixed `process` module for `MINGW*`.
 
 ### Changed
 
-* Moved `Email::fold_text_plain_parts` to `Parts::to_readable`. It
+- Moved `Email::fold_text_plain_parts` to `Parts::to_readable`. It
   take now a `PartsReaderOptions` as parameter:
-  * `plain_first`: shows plain texts first, switch to html if empty.
-  * `sanitize`: sanitizes or not text bodies (both plain and html).
+  - `plain_first`: shows plain texts first, switch to html if empty.
+  - `sanitize`: sanitizes or not text bodies (both plain and html).
 
 ### Fixed
 
-* Fixed long subject decoding issue.
-* Fixed bad mailbox name encoding from UTF7-IMAP.
+- Fixed long subject decoding issue.
+- Fixed bad mailbox name encoding from UTF7-IMAP.
 
 ## [0.3.1] - 2022-10-10
 
 ### Changed
 
-* Renamed `EmailSendCmd` into `SendmailConfig`.
-* Renamed `EmailSender::Cmd` into `EmailSender::Sendmail`.
+- Renamed `EmailSendCmd` into `SendmailConfig`.
+- Renamed `EmailSender::Cmd` into `EmailSender::Sendmail`.
 
 ### Fixed
 
-* Fixed broken tests
+- Fixed broken tests
 
 ### Removed
 
-* Removed useless dependency `toml` [patch#1].
+- Removed useless dependency `toml` [patch#1].
   
 ## [0.3.0] - 2022-10-10
 
 ### Changed
 
-* Renamed `DEFAULT_DRAFT_FOLDER` to `DEFAULT_DRAFTS_FOLDER` to be more
+- Renamed `DEFAULT_DRAFT_FOLDER` to `DEFAULT_DRAFTS_FOLDER` to be more
   consistant with IMAP folder names.
-* Changed licence to `MIT`.
-* Renamed feature `internal-sender` to `smtp-sender`.
+- Changed licence to `MIT`.
+- Renamed feature `internal-sender` to `smtp-sender`.
   
 ### Fixed
 
-* Fixed folder name case (because IMAP folders are case sensitive).
+- Fixed folder name case (because IMAP folders are case sensitive).
 
 ## [0.2.1] - 2022-09-29
 
 ### Changed
 
-* Removed notmuch from the default features.
+- Removed notmuch from the default features.
 
 ## [0.2.0] - 2022-09-28
 
 ### Changed
 
-* Unwrapped folders and envelopes from struct:
+- Unwrapped folders and envelopes from struct:
 
   ```rust
   // Before
@@ -179,12 +179,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   pub struct Envelopes(pub Vec<Envelope>);
   ```
 
-* Renamed `TplOverride::sig` to `TplOverride::signature`.
-* Upgraded Nix deps.
+- Renamed `TplOverride::sig` to `TplOverride::signature`.
+- Upgraded Nix deps.
 
 ### Fixed
 
-* Fixed imap backend pagination overflow.
+- Fixed imap backend pagination overflow.
 
 ## [0.1.0] - 2022-09-22
 
