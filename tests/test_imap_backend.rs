@@ -18,7 +18,7 @@ fn test_imap_backend() {
         email_reading_decrypt_cmd: Some(String::from(
             "gpg --decrypt --quiet --recipient-file ./tests/keys/bob.key",
         )),
-        email_reading_verify_cmd: Some(String::from("gpgg --verify --quiet")),
+        email_reading_verify_cmd: Some(String::from("gpg --verify --quiet")),
         ..AccountConfig::default()
     };
 
