@@ -44,7 +44,8 @@ async fn main() -> anyhow::Result<()> {
             AuthCommand::Set => auth().await,
             AuthCommand::Get => {
                 let token: Token = confy::load("postars", None)?;
-                println!("{:?}", token);
+                let json = serde_json::to_string_pretty(&token)?;
+                println!("{}", json);
                 Ok(())
             }
         },
