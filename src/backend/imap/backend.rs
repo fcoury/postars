@@ -138,6 +138,7 @@ pub enum Error {
 
 pub type Result<T> = result::Result<T, Error>;
 
+#[derive(Debug)]
 pub enum ImapSessionStream {
     Tls(TlsStream<TcpStream>),
     Tcp(TcpStream),
@@ -231,6 +232,22 @@ pub struct ImapBackend<'a> {
     sessions_pool: Vec<Mutex<ImapSession>>,
 }
 
+#[derive(Debug)]
+struct OAuth2 {
+    user: String,
+    access_token: String,
+}
+
+impl imap::Authenticator for OAuth2 {
+    type Response = String;
+    fn process(&self, _: &[u8]) -> Self::Response {
+        format!(
+            "user={}\x01auth=Bearer {}\x01\x01",
+            self.user, self.access_token
+        )
+    }
+}
+
 impl<'a> ImapBackend<'a> {
     pub fn new(
         account_config: Cow<'a, AccountConfig>,
@@ -264,9 +281,18 @@ impl<'a> ImapBackend<'a> {
         }
         .map_err(Error::ConnectImapServerError)?;
 
-        let mut session = client
-            .login(&config.login, passwd.as_ref())
-            .map_err(|res| Error::LoginImapServerError(res.0))?;
+        let mut session = if let Some(access_token) = config.clone().access_token {
+            let auth = OAuth2 {
+                user: config.login.clone(),
+                access_token,
+            };
+
+            client.authenticate("XOAUTH2", &auth)
+        } else {
+            client.login(&config.login, passwd.as_ref())
+        }
+        .map_err(|res| Error::LoginImapServerError(res.0))?;
+
         session.debug = log_enabled!(Level::Trace);
 
         Result::Ok(session)
