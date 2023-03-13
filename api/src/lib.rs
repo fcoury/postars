@@ -1,7 +1,12 @@
 use std::net::SocketAddr;
 
-use axum::{routing::get, Router};
+use axum::{http::HeaderMap, routing::get, Json, Router};
+use axum_error::*;
+use email::Email;
+use fehler::throws;
 use tracing::info;
+
+pub mod email;
 
 pub struct Server {
     addr: SocketAddr,
@@ -24,6 +29,13 @@ impl Server {
     }
 }
 
-pub async fn get_emails() -> &'static str {
-    "Hello, world!"
+#[throws]
+async fn get_emails(headers: HeaderMap) -> Json<Vec<Email>> {
+    let auth_header = headers
+        .get("authorization")
+        .ok_or(eyre::eyre!("No authorization header"))?;
+
+    let access_code = auth_header.to_str()?.to_string();
+    let server = email::Server::new(access_code);
+    Json(server.get_emails()?)
 }

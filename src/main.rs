@@ -3,14 +3,9 @@ mod auth;
 use api::Server;
 use clap::{Parser, Subcommand};
 use dotenvy::dotenv;
-use tracing::info;
 use tracing_subscriber::{EnvFilter, FmtSubscriber};
 
-#[derive(Subcommand, Clone, Debug)]
-enum Command {
-    Serve,
-    Auth,
-}
+use crate::auth::Token;
 
 #[derive(Parser, Debug)]
 pub struct Cli {
@@ -21,6 +16,21 @@ pub struct Cli {
     debug: bool,
 }
 
+#[derive(Subcommand, Clone, Debug)]
+enum Command {
+    Serve,
+    Auth {
+        #[command(subcommand)]
+        command: AuthCommand,
+    },
+}
+
+#[derive(Subcommand, Clone, Debug)]
+enum AuthCommand {
+    Get,
+    Set,
+}
+
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     dotenv().ok();
@@ -29,8 +39,15 @@ async fn main() -> anyhow::Result<()> {
     setup_logging(&cli)?;
 
     match cli.command {
-        Command::Serve => serve().await,
-        Command::Auth => auth().await,
+        Command::Serve => Ok(serve().await?),
+        Command::Auth { command } => match command {
+            AuthCommand::Set => auth().await,
+            AuthCommand::Get => {
+                let token: Token = confy::load("postars", None)?;
+                println!("{:?}", token);
+                Ok(())
+            }
+        },
     }
 }
 
