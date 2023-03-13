@@ -1,3 +1,4 @@
+#![allow(clippy::all)]
 #[cfg(feature = "imap-backend")]
 use concat_with::concat_line;
 #[cfg(feature = "imap-backend")]

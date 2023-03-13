@@ -1,3 +1,4 @@
+#![allow(clippy::all)]
 use env_logger;
 use std::{borrow::Cow, collections::HashSet, thread, time::Duration};
 use tempfile::tempdir;

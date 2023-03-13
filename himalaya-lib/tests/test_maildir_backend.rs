@@ -1,3 +1,4 @@
+#![allow(clippy::all)]
 use concat_with::concat_line;
 use maildir::Maildir;
 use std::{borrow::Cow, collections::HashMap, fs, iter::FromIterator};

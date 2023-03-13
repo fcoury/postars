@@ -1,3 +1,4 @@
+#![allow(clippy::all)]
 pub use mime_msg_builder::{
     evaluator::CompilerBuilder,
     tpl::{HeaderVal, ShowHeaders, ShowTextPartsStrategy, Tpl, TplBuilder},

@@ -1,3 +1,4 @@
+#![allow(clippy::all)]
 use std::{borrow::Cow, thread, time::Duration};
 
 use himalaya_lib::{AccountConfig, CompilerBuilder, Sender, TplBuilder};
