@@ -37,5 +37,5 @@ async fn get_emails(headers: HeaderMap) -> Json<Vec<Email>> {
 
     let access_code = auth_header.to_str()?.to_string();
     let server = email::Server::new(access_code);
-    Json(server.get_emails()?)
+    Json(server.fetch("INBOX")?)
 }

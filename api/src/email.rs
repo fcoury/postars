@@ -58,12 +58,12 @@ impl Server {
         Ok(ImapBackendBuilder::new().build(Cow::Owned(account), Cow::Owned(config))?)
     }
 
-    pub fn get_emails(&self) -> eyre::Result<Vec<Email>> {
+    pub fn fetch(&self, folder: &str) -> eyre::Result<Vec<Email>> {
         let backend = self.backend()?;
-        let envelopes = backend.list_envelopes("INBOX", 0, 10)?;
+        let envelopes = backend.list_envelopes(folder, 0, 10)?;
         let emails = envelopes
             .iter()
-            .map(|e| Email::from("INBOX", e.clone()))
+            .map(|e| Email::from(folder, e.clone()))
             .collect();
 
         Ok(emails)
