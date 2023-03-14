@@ -124,6 +124,11 @@ impl<'a> Server<'a> {
         })
     }
 
+    pub fn folders(&self) -> eyre::Result<Vec<String>> {
+        let folders = self.backend.list_folders()?;
+        Ok(folders.to_vec().iter().map(|f| f.name.clone()).collect())
+    }
+
     pub fn fetch(&self, folder: &str) -> eyre::Result<Vec<Email>> {
         let envelopes = self.backend.list_envelopes(folder, 0, 10)?;
         let emails = envelopes

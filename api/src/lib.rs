@@ -38,6 +38,8 @@ impl Server {
             .route("/api/emails/:internal_id/move/:folder", put(put_move))
             .route("/api/emails/:internal_id/archive", put(put_archive))
             .route("/api/emails/:internal_id/spam", put(put_mark_spam))
+            .route("/api/folders", get(get_folders))
+            .route("/api/:folder/emails", get(get_folder_emails))
     }
 }
 
@@ -47,6 +49,23 @@ async fn get_emails(
 ) -> Json<Vec<Email>> {
     let server = email::Server::new(access_code.token().to_owned())?;
     Json(server.fetch("INBOX")?)
+}
+
+#[throws]
+async fn get_folders(
+    TypedHeader(access_code): TypedHeader<Authorization<Bearer>>,
+) -> Json<Vec<String>> {
+    let server = email::Server::new(access_code.token().to_owned())?;
+    Json(server.folders()?)
+}
+
+#[throws]
+async fn get_folder_emails(
+    TypedHeader(access_code): TypedHeader<Authorization<Bearer>>,
+    Path(folder): Path<String>,
+) -> Json<Vec<Email>> {
+    let server = email::Server::new(access_code.token().to_owned())?;
+    Json(server.fetch(&folder)?)
 }
 
 #[throws]
@@ -103,6 +122,6 @@ async fn put_mark_spam(
 ) -> Json<serde_json::Value> {
     let server = email::Server::new(access_code.token().to_owned())?;
     // FIXME assuming INBOX for the folder
-    server.move_emails("INBOX", "Junk Mail", vec![&internal_id])?;
+    server.move_emails("INBOX", "Junk Email", vec![&internal_id])?;
     Json(json!({ "ok": true }))
 }
