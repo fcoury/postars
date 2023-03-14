@@ -33,7 +33,9 @@ impl Server {
     pub fn routes(&self) -> Router {
         Router::new()
             .route("/api/emails", get(get_emails))
+            .route("/api/emails/move/:folder", put(put_bulk_move))
             .route("/api/emails/:internal_id", get(get_email))
+            .route("/api/emails/:internal_id/move/:folder", put(put_move))
             .route("/api/emails/:internal_id/archive", put(put_archive))
             .route("/api/emails/:internal_id/spam", put(put_mark_spam))
     }
@@ -52,8 +54,35 @@ async fn get_email(
     TypedHeader(access_code): TypedHeader<Authorization<Bearer>>,
     Path(internal_id): Path<String>,
 ) -> Json<String> {
+    info!("Get email {}", internal_id);
     let server = email::Server::new(access_code.token().to_owned())?;
     Json(server.fetch_body("INBOX", &internal_id)?)
+}
+
+#[throws]
+async fn put_bulk_move(
+    TypedHeader(access_code): TypedHeader<Authorization<Bearer>>,
+    Path(folder): Path<String>,
+    Json(internal_ids): Json<Vec<String>>,
+) -> Json<serde_json::Value> {
+    info!("Moving {internal_ids:?} to {folder}...");
+    let server = email::Server::new(access_code.token().to_owned())?;
+    let internal_ids = internal_ids.iter().map(|s| s.as_str()).collect();
+    // FIXME assuming INBOX for the folder
+    server.move_emails("INBOX", &folder, internal_ids)?;
+    Json(json!({ "ok": true }))
+}
+
+#[throws]
+async fn put_move(
+    TypedHeader(access_code): TypedHeader<Authorization<Bearer>>,
+    Path((internal_id, folder)): Path<(String, String)>,
+) -> Json<serde_json::Value> {
+    info!("Moving {internal_id} to {folder}...");
+    let server = email::Server::new(access_code.token().to_owned())?;
+    // FIXME assuming INBOX for the folder
+    server.move_emails("INBOX", &folder, vec![&internal_id])?;
+    Json(json!({ "ok": true }))
 }
 
 #[throws]
