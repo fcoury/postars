@@ -159,4 +159,15 @@ impl<'a> Server<'a> {
 
         Ok(<Tpl as Into<String>>::into(tpl))
     }
+
+    pub fn move_emails(
+        &self,
+        from_folder: &str,
+        to_folder: &str,
+        internal_ids: Vec<&str>,
+    ) -> eyre::Result<()> {
+        self.backend
+            .move_emails(from_folder, to_folder, internal_ids)?;
+        Ok(())
+    }
 }

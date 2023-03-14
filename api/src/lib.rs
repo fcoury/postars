@@ -3,12 +3,13 @@ use std::net::SocketAddr;
 use axum::{
     extract::Path,
     headers::{authorization::Bearer, Authorization},
-    routing::get,
+    routing::{get, put},
     Json, Router, TypedHeader,
 };
 use axum_error::*;
 use email::Email;
 use fehler::throws;
+use serde_json::json;
 use tracing::info;
 
 pub mod email;
@@ -33,6 +34,8 @@ impl Server {
         Router::new()
             .route("/api/emails", get(get_emails))
             .route("/api/emails/:internal_id", get(get_email))
+            .route("/api/emails/:internal_id/archive", put(put_archive))
+            .route("/api/emails/:internal_id/spam", put(put_mark_spam))
     }
 }
 
@@ -51,4 +54,26 @@ async fn get_email(
 ) -> Json<String> {
     let server = email::Server::new(access_code.token().to_owned())?;
     Json(server.fetch_body("INBOX", &internal_id)?)
+}
+
+#[throws]
+async fn put_archive(
+    TypedHeader(access_code): TypedHeader<Authorization<Bearer>>,
+    Path(internal_id): Path<String>,
+) -> Json<serde_json::Value> {
+    let server = email::Server::new(access_code.token().to_owned())?;
+    // FIXME assuming INBOX for the folder
+    server.move_emails("INBOX", "Archive", vec![&internal_id])?;
+    Json(json!({ "ok": true }))
+}
+
+#[throws]
+async fn put_mark_spam(
+    TypedHeader(access_code): TypedHeader<Authorization<Bearer>>,
+    Path(internal_id): Path<String>,
+) -> Json<serde_json::Value> {
+    let server = email::Server::new(access_code.token().to_owned())?;
+    // FIXME assuming INBOX for the folder
+    server.move_emails("INBOX", "Junk Mail", vec![&internal_id])?;
+    Json(json!({ "ok": true }))
 }
