@@ -1,3 +1,4 @@
+mod api;
 mod auth;
 
 use api::Server;

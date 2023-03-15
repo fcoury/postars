@@ -8,12 +8,16 @@ members = ['api']
 
 [dependencies]
 anyhow = "1.0.69"
-api = {path = "api"}
+axum = { version = "0.6.10", features = ["macros", "headers"] }
 axum-error = "0.2.0"
+bitflags = { version = "2.0.0", features = ["serde"] }
 chrono = { version = "0.4.24", features = ["serde"] }
 clap = { version = "4.1.8", features = ["derive"] }
 confy = "0.5.1"
 dotenvy = "0.15.6"
+eyre = "0.6.8"
+fehler = "1.0.0"
+himalaya-lib = { path = "../himalaya-lib" }
 oauth2 = "4.3.0"
 opener = "0.5.2"
 serde = { version = "1.0.155", features = ["derive"] }
