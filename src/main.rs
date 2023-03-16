@@ -54,7 +54,11 @@ async fn main() -> anyhow::Result<()> {
 }
 
 fn setup_logging(cli: &Cli) -> anyhow::Result<()> {
-    let log_level = if cli.debug { "debug" } else { "info" };
+    let log_level = if cli.debug {
+        "debug,hyper=info"
+    } else {
+        "info"
+    };
 
     let subscriber = FmtSubscriber::builder()
         .with_env_filter(

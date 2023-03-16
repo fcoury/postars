@@ -90,6 +90,7 @@ impl From<himalaya_lib::Flags> for Flags {
 }
 
 impl Email {
+    #[allow(unused)]
     pub fn hidrate_body(&mut self, server: &Server) -> eyre::Result<()> {
         let body = server.fetch_body(&self.folder, &self.internal_id)?;
         self.body = Some(body);
