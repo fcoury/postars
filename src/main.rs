@@ -6,6 +6,7 @@ use std::net::SocketAddr;
 use api::Server;
 use clap::{Parser, Subcommand};
 use dotenvy::dotenv;
+use tracing::info;
 use tracing_subscriber::{EnvFilter, FmtSubscriber};
 
 use crate::auth::Token;
@@ -76,6 +77,11 @@ fn setup_logging(cli: &Cli) -> anyhow::Result<()> {
 }
 
 async fn serve(bind: SocketAddr) -> anyhow::Result<()> {
+    info!(
+        "Starting for account {} ({})",
+        std::env::var("ACCOUNT_NAME").unwrap_or_default(),
+        std::env::var("ACCOUNT_EMAIL").unwrap_or_default()
+    );
     Server::new(bind).start().await
 }
 
