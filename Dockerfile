@@ -20,5 +20,8 @@ FROM debian:bullseye-slim AS runtime
 WORKDIR /app
 COPY --from=builder /app/target/release/postrs /app/target/release/postrs
 
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends ca-certificates
+
 EXPOSE 4000
 CMD ["/app/target/release/postrs", "serve", "--bind", "0.0.0.0:4000"]
