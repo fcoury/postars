@@ -1,6 +1,8 @@
 mod api;
 mod auth;
 
+use std::net::SocketAddr;
+
 use api::Server;
 use clap::{Parser, Subcommand};
 use dotenvy::dotenv;
@@ -19,7 +21,11 @@ pub struct Cli {
 
 #[derive(Subcommand, Clone, Debug)]
 enum Command {
-    Serve,
+    Serve {
+        /// The address to bind to
+        #[arg(short, long, default_value = "127.0.0.1:3001")]
+        bind: SocketAddr,
+    },
     Auth {
         #[command(subcommand)]
         command: AuthCommand,
@@ -40,7 +46,7 @@ async fn main() -> anyhow::Result<()> {
     setup_logging(&cli)?;
 
     match cli.command {
-        Command::Serve => Ok(serve().await?),
+        Command::Serve { bind } => Ok(serve(bind).await?),
         Command::Auth { command } => match command {
             AuthCommand::Set => auth().await,
             AuthCommand::Get => {
@@ -69,8 +75,8 @@ fn setup_logging(cli: &Cli) -> anyhow::Result<()> {
     Ok(())
 }
 
-async fn serve() -> anyhow::Result<()> {
-    Server::new("127.0.0.1:3001".parse()?).start().await
+async fn serve(bind: SocketAddr) -> anyhow::Result<()> {
+    Server::new(bind).start().await
 }
 
 async fn auth() -> anyhow::Result<()> {

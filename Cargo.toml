@@ -1,27 +1,27 @@
 [package]
 edition = "2021"
-name = "postars"
+name = "postrs"
 version = "0.1.0"
 
 [dependencies]
 anyhow = "1.0.69"
-axum = { version = "0.6.10", features = ["macros", "headers"] }
+axum = {version = "0.6.10", features = ["macros", "headers"]}
 axum-error = "0.2.0"
-bitflags = { version = "2.0.0", features = ["serde"] }
-chrono = { version = "0.4.24", features = ["serde"] }
-clap = { version = "4.1.8", features = ["derive"] }
+bitflags = {version = "2.0.0", features = ["serde"]}
+chrono = {version = "0.4.24", features = ["serde"]}
+clap = {version = "4.1.8", features = ["derive"]}
 confy = "0.5.1"
 dotenvy = "0.15.6"
 eyre = "0.6.8"
 fehler = "1.0.0"
-himalaya-lib = { path = "himalaya-lib" }
+himalaya-lib = {path = "himalaya-lib"}
 oauth2 = "4.3.0"
 opener = "0.5.2"
-serde = { version = "1.0.155", features = ["derive"] }
-serde_json = { version = "1.0.94", features = ["preserve_order"] }
+serde = {version = "1.0.155", features = ["derive"]}
+serde_json = {version = "1.0.94", features = ["preserve_order"]}
 thiserror = "1.0.39"
-tokio = { version = "1.26.0", features = ["full"] }
-tower-http = { version = "0.4.0", features = ["trace"] }
+tokio = {version = "1.26.0", features = ["full"]}
+tower-http = {version = "0.4.0", features = ["trace"]}
 tracing = "0.1.37"
-tracing-subscriber = { version = "0.3.16", features = ["env-filter"] }
+tracing-subscriber = {version = "0.3.16", features = ["env-filter"]}
 url = "2.3.1"
