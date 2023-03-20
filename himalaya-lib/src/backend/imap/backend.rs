@@ -216,7 +216,14 @@ impl<'a> ImapBackendBuilder {
             sessions_pool_cursor: Mutex::new(0),
             sessions_pool: sessions_pool
                 .par_iter()
-                .flat_map(|_| ImapBackend::create_session(&imap_config, &passwd).map(Mutex::new))
+                .flat_map(|_| {
+                    let result = ImapBackend::create_session(&imap_config, &passwd);
+                    if let Err(err) = &result {
+                        eprintln!("cannot create imap session: {} ({:#?})", err, err);
+                        // TODO error!("cannot create imap session: {}", err);
+                    }
+                    result.map(Mutex::new)
+                })
                 .collect(),
         };
 
