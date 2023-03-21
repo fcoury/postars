@@ -10,6 +10,7 @@ use axum_error::*;
 use email::Email;
 use fehler::throws;
 use serde_json::json;
+use tower_http::cors::{AllowHeaders, AllowMethods, AllowOrigin, CorsLayer};
 use tower_http::trace::TraceLayer;
 use tracing::info;
 
@@ -41,6 +42,12 @@ impl Server {
             .route("/api/emails/:internal_id/spam", put(put_mark_spam))
             .route("/api/folders", get(get_folders))
             .route("/api/:folder/emails", get(get_folder_emails))
+            .layer(
+                CorsLayer::new()
+                    .allow_origin(AllowOrigin::any())
+                    .allow_methods(AllowMethods::any())
+                    .allow_headers(AllowHeaders::any()),
+            )
             .layer(TraceLayer::new_for_http())
     }
 }
