@@ -1,7 +1,13 @@
 from flask import Flask, request, jsonify
 import pickle
+import os
+from encrypt_decrypt import decrypt_file
 
 app = Flask(__name__)
+
+# Decrypt the files before loading
+decrypt_file('spam_classifier_model.pkl', os.environ['PICKLE_KEY'].encode())
+decrypt_file('vectorizer.pkl', os.environ['PICKLE_KEY'].encode())
 
 # Load the trained model and vectorizer
 with open('spam_classifier_model.pkl', 'rb') as model_file:
@@ -9,6 +15,10 @@ with open('spam_classifier_model.pkl', 'rb') as model_file:
 
 with open('vectorizer.pkl', 'rb') as vectorizer_file:
     vectorizer = pickle.load(vectorizer_file)
+
+# Encrypt the files after loading
+decrypt_file('spam_classifier_model.pkl', os.environ['PICKLE_KEY'].encode())
+decrypt_file('vectorizer.pkl', os.environ['PICKLE_KEY'].encode())
 
 @app.route('/predict', methods=['POST'])
 def predict():
