@@ -6,39 +6,37 @@ const useEmailActions = () => {
   const { dispatch } = useAppState();
 
   const archiveMutation = useMutation(
-    (internal_id) =>
-      fetchData(`/emails/${internal_id}/archive`, { method: "PUT" }),
+    (id) => fetchData(`/emails/${id}/archive`, { method: "PUT" }),
     {
-      onSuccess: (data, internal_id) => {
+      onSuccess: (data, id) => {
+        console.log("after success", data, id);
         dispatch({
           type: "removeEmail",
-          payload: internal_id,
+          payload: id,
         });
       },
     }
   );
 
   const spamMutation = useMutation(
-    (internal_id) =>
-      fetchData(`/emails/${internal_id}/spam`, { method: "PUT" }),
+    (id) => fetchData(`/emails/${id}/spam`, { method: "PUT" }),
     {
-      onSuccess: (data, internal_id) => {
+      onSuccess: (data, id) => {
         dispatch({
           type: "removeEmail",
-          payload: internal_id,
+          payload: id,
         });
       },
     }
   );
 
   const unreadMutation = useMutation(
-    (internal_id) =>
-      fetchData(`/emails/${internal_id}/unread`, { method: "PUT" }),
+    (id) => fetchData(`/emails/${id}/unread`, { method: "PUT" }),
     {
-      onSuccess: (email, internal_id) => {
+      onSuccess: (email, id) => {
         dispatch({
           type: "updateEmail",
-          payload: { internal_id, updates: email },
+          payload: { id, updates: email },
         });
       },
     }

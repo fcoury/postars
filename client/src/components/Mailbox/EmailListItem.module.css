@@ -94,6 +94,10 @@
   margin-right: 8px;
 }
 
+.iconContainer .loadingSpinner {
+  margin-right: 8px;
+}
+
 .emailListItem:hover .iconContainer {
   display: flex;
 }

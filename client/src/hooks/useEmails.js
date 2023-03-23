@@ -24,16 +24,16 @@ const useEmails = () => {
     },
   });
 
-  const updateEmail = (internal_id, updates) => {
+  const updateEmail = (id, updates) => {
     const updatedEmails = state.emails.map((email) =>
-      email.internal_id === internal_id ? { ...email, ...updates } : email
+      email.id === id ? { ...email, ...updates } : email
     );
     dispatch({ type: "setEmails", payload: updatedEmails });
   };
 
   React.useEffect(() => {
     if (state.action === "updateEmail") {
-      updateEmail(state.actionPayload.internal_id, state.actionPayload.updates);
+      updateEmail(state.actionPayload.id, state.actionPayload.updates);
     }
   }, [state.action, state.actionPayload]);
 

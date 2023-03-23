@@ -24,11 +24,9 @@ export default function Mailbox() {
     <div className="email-list">
       {emails.map((email) => (
         <EmailListItem
-          key={email.internal_id}
+          key={email.id}
           email={email}
-          selected={
-            state.email && state.email.internal_id === email.internal_id
-          }
+          selected={state.email && state.email.id === email.id}
           onClick={() => handleEmailClick(email)}
         />
       ))}
