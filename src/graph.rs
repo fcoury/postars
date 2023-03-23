@@ -23,6 +23,19 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
+pub struct Folder {
+    pub child_folder_count: u32,
+    pub display_name: String,
+    pub id: String,
+    pub is_hidden: bool,
+    pub parent_folder_id: String,
+    pub size_in_bytes: u64,
+    pub total_item_count: u32,
+    pub unread_item_count: u32,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
 pub struct Email {
     pub id: String,
     pub created_date_time: String,
@@ -93,7 +106,7 @@ impl GraphClient {
         }
     }
 
-    pub async fn get_user_folders(&self) -> Result<Vec<(String, String)>, GraphClientError> {
+    pub async fn get_user_folders(&self) -> Result<Vec<Folder>, GraphClientError> {
         let url = format!("{}/me/mailFolders", GRAPH_API_BASE_URL);
         let response = self
             .client
@@ -104,17 +117,16 @@ impl GraphClient {
 
         if response.status().is_success() {
             let json: Value = response.json().await?;
-            let folders = json["value"]
+            let folders_value = json["value"]
                 .as_array()
-                .ok_or(GraphClientError::Parse("folders", json.clone()))?
+                .ok_or_else(|| GraphClientError::Parse("folders", json.clone()))?;
+
+            let folders: Result<Vec<Folder>, serde_json::Error> = folders_value
                 .iter()
-                .filter_map(|folder| {
-                    let id = folder["id"].as_str()?.to_string();
-                    let display_name = folder["displayName"].as_str()?.to_string();
-                    Some((id, display_name))
-                })
+                .map(|folder_value| serde_json::from_value(folder_value.clone()))
                 .collect();
-            Ok(folders)
+
+            Ok(folders?)
         } else {
             Err(GraphClientError::Request(response.status()))
         }
@@ -140,10 +152,7 @@ impl GraphClient {
                 .map(|email_value| serde_json::from_value(email_value.clone()))
                 .collect();
 
-            match emails {
-                Ok(emails) => Ok(emails),
-                Err(_) => Err(GraphClientError::Parse("emails", json.clone())),
-            }
+            Ok(emails?)
         } else {
             Err(GraphClientError::Request(response.status()))
         }
@@ -152,7 +161,7 @@ impl GraphClient {
     pub async fn get_user_emails_from_folder(
         &self,
         folder_id: &str,
-    ) -> Result<Vec<String>, GraphClientError> {
+    ) -> Result<Vec<Email>, GraphClientError> {
         let url = format!(
             "{}/me/mailFolders/{}/messages",
             GRAPH_API_BASE_URL, folder_id
@@ -166,13 +175,16 @@ impl GraphClient {
 
         if response.status().is_success() {
             let json: Value = response.json().await?;
-            let emails = json["value"]
+            let emails_value = json["value"]
                 .as_array()
-                .ok_or(GraphClientError::Parse("emails", json.clone()))?
+                .ok_or_else(|| GraphClientError::Parse("emails", json.clone()))?;
+
+            let emails: Result<Vec<Email>, serde_json::Error> = emails_value
                 .iter()
-                .filter_map(|email| email["subject"].as_str().map(|s| s.to_string()))
+                .map(|email_value| serde_json::from_value(email_value.clone()))
                 .collect();
-            Ok(emails)
+
+            Ok(emails?)
         } else {
             Err(GraphClientError::Request(response.status()))
         }
