@@ -9,13 +9,9 @@ function EmailBody() {
     return <div>Please select an email to view its content.</div>;
   }
 
-  if (email && !email.body) {
-    return <div>Loading email body...</div>;
-  }
-
   return (
     <div className="body">
-      <div dangerouslySetInnerHTML={{ __html: email.body }} />
+      <div dangerouslySetInnerHTML={{ __html: email.body.content }} />
     </div>
   );
 }

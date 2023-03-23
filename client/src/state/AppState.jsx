@@ -41,20 +41,6 @@ function reducer(state, action) {
       return { ...state, emails: updatedEmails };
     case "setSelectedEmail":
       return { ...state, email: action.payload };
-    case "setEmailBody":
-      const updatedEmailsForBody = state.emails.map((email) =>
-        email.internal_id === state.email.internal_id
-          ? { ...email, body: action.payload }
-          : email
-      );
-      return {
-        ...state,
-        email: {
-          ...state.email,
-          body: action.payload,
-        },
-        emails: updatedEmailsForBody,
-      };
     default:
       throw new Error();
   }

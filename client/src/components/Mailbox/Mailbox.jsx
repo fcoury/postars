@@ -1,5 +1,4 @@
 import { useCallback } from "react";
-import useEmailBody from "../../hooks/useEmailBody";
 import useEmails from "../../hooks/useEmails";
 import { useAppState } from "../../state/AppState";
 import Loading from "../Loading";
@@ -9,23 +8,12 @@ import "./Mailbox.css";
 export default function Mailbox() {
   const { emails, isLoading, error } = useEmails();
   const { state, dispatch } = useAppState();
-  const { data: emailBodyData, refetch: refetchEmailBody } = useEmailBody(
-    state.email?.internal_id
-  );
 
   const handleEmailClick = useCallback(
     async (email) => {
       dispatch({ type: "setSelectedEmail", payload: email });
-
-      if (email.body === undefined) {
-        const newEmailBodyData = await refetchEmailBody();
-        dispatch({
-          type: "setSelectedEmail",
-          payload: { ...email, body: newEmailBodyData.body },
-        });
-      }
     },
-    [dispatch, refetchEmailBody]
+    [dispatch]
   );
 
   if (error) return <div>Error: {error.message}</div>;
