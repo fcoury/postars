@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import Menu from "../Menu";
+import menuStyles from "../Menu.module.css";
 import styles from "./Sidebar.module.css";
 
 export default function Sidebar() {
@@ -10,7 +11,7 @@ export default function Sidebar() {
   };
 
   const handleOutsideClick = (event) => {
-    const menuElement = document.querySelector(`.${styles.menu}`);
+    const menuElement = document.querySelector(`.${menuStyles.menu}`);
     const menuIconElement = document.querySelector(".far.fa-bars");
 
     if (
@@ -23,9 +24,9 @@ export default function Sidebar() {
   };
 
   useEffect(() => {
-    // document.addEventListener("mousedown", handleOutsideClick);
+    document.addEventListener("mousedown", handleOutsideClick);
     return () => {
-      // document.removeEventListener("mousedown", handleOutsideClick);
+      document.removeEventListener("mousedown", handleOutsideClick);
     };
   }, []);
 
