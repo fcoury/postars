@@ -97,6 +97,26 @@ dependencies = [
 ]
 
 [[package]]
+name = "axum-extra"
+version = "0.7.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7ea61f9f77592526b73fd14fe0f5938412bda49423f8b9f372ac76a9d6cf0ad2"
+dependencies = [
+ "axum",
+ "bytes",
+ "futures-util",
+ "http",
+ "http-body",
+ "mime",
+ "pin-project-lite",
+ "tokio",
+ "tower",
+ "tower-http",
+ "tower-layer",
+ "tower-service",
+]
+
+[[package]]
 name = "axum-macros"
 version = "0.3.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1112,6 +1132,7 @@ dependencies = [
  "anyhow",
  "axum",
  "axum-error",
+ "axum-extra",
  "bitflags 2.0.0",
  "chrono",
  "clap",

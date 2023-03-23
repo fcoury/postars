@@ -7,6 +7,7 @@ use axum::{
     Json, Router, TypedHeader,
 };
 use axum_error::*;
+use axum_extra::routing::SpaRouter;
 use fehler::throws;
 use tower_http::cors::{AllowHeaders, AllowMethods, AllowOrigin, CorsLayer};
 use tower_http::trace::TraceLayer;
@@ -41,6 +42,7 @@ impl Server {
             .route("/api/emails/:id/spam", put(put_mark_spam))
             .route("/api/folders", get(get_folders))
             .route("/api/:folder/emails", get(get_folder_emails))
+            .merge(SpaRouter::new("/", "public").index_file("index.html"))
             .layer(
                 CorsLayer::new()
                     .allow_origin(AllowOrigin::any())
