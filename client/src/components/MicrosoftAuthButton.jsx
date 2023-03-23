@@ -10,8 +10,6 @@ const MicrosoftAuthButton = ({ clientId, authority, scopes }) => {
     },
   };
 
-  console.log("msalConfig", msalConfig);
-
   const pca = useMemo(
     () => new PublicClientApplication(msalConfig),
     [msalConfig]

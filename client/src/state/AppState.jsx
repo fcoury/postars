@@ -11,7 +11,6 @@ const initialState = {
 };
 
 function reducer(state, action) {
-  console.log("reducer", action.type, action.payload);
   switch (action.type) {
     case "setLoggedIn":
       return { ...state, isLoggedIn: action.payload };

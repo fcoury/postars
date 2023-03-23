@@ -9,7 +9,6 @@ const useEmailActions = () => {
     (id) => fetchData(`/emails/${id}/archive`, { method: "PUT" }),
     {
       onSuccess: (data, id) => {
-        console.log("after success", data, id);
         dispatch({
           type: "removeEmail",
           payload: id,
