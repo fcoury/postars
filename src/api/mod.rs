@@ -14,6 +14,8 @@ use tower_http::cors::{AllowHeaders, AllowMethods, AllowOrigin, CorsLayer};
 use tower_http::trace::TraceLayer;
 use tracing::info;
 
+use crate::graph::{Email as GraphEmail, GraphClient};
+
 pub mod email;
 
 pub struct Server {
@@ -55,9 +57,9 @@ impl Server {
 #[throws]
 async fn get_emails(
     TypedHeader(access_code): TypedHeader<Authorization<Bearer>>,
-) -> Json<Vec<Email>> {
-    let server = email::Server::new(access_code.token().to_owned())?;
-    Json(server.fetch("INBOX")?)
+) -> Json<Vec<GraphEmail>> {
+    let client = GraphClient::new(access_code.token().to_owned());
+    Json(client.get_user_emails().await?)
 }
 
 #[throws]
