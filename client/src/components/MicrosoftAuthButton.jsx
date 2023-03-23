@@ -29,6 +29,8 @@ const MicrosoftAuthButton = ({ clientId, authority, scopes }) => {
         JSON.stringify(loginResponse.account)
       );
       localStorage.setItem("msalAccessToken", loginResponse.accessToken);
+
+      window.location.reload();
     } catch (error) {
       console.error("Login failed:", error);
     }

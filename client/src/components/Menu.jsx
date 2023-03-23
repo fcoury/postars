@@ -1,6 +1,9 @@
+import { useAppState } from "../state/AppState";
 import styles from "./Menu.module.css";
 
 export default function Menu() {
+  let { dispatch } = useAppState();
+
   const logout = (event) => {
     event.stopPropagation();
 
