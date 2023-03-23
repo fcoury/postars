@@ -14,7 +14,7 @@ use tower_http::cors::{AllowHeaders, AllowMethods, AllowOrigin, CorsLayer};
 use tower_http::trace::TraceLayer;
 use tracing::info;
 
-use crate::graph::{Email as GraphEmail, GraphClient};
+use crate::graph::{Email as GraphEmail, Folder, GraphClient};
 
 pub mod email;
 
@@ -65,18 +65,18 @@ async fn get_emails(
 #[throws]
 async fn get_folders(
     TypedHeader(access_code): TypedHeader<Authorization<Bearer>>,
-) -> Json<Vec<String>> {
-    let server = email::Server::new(access_code.token().to_owned())?;
-    Json(server.folders()?)
+) -> Json<Vec<Folder>> {
+    let client = GraphClient::new(access_code.token().to_owned());
+    Json(client.get_user_folders().await?)
 }
 
 #[throws]
 async fn get_folder_emails(
     TypedHeader(access_code): TypedHeader<Authorization<Bearer>>,
     Path(folder): Path<String>,
-) -> Json<Vec<Email>> {
-    let server = email::Server::new(access_code.token().to_owned())?;
-    Json(server.fetch(&folder)?)
+) -> Json<Vec<GraphEmail>> {
+    let client = GraphClient::new(access_code.token().to_owned());
+    Json(client.get_user_emails_from_folder(&folder).await?)
 }
 
 #[throws]
