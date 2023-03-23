@@ -34,13 +34,11 @@ export default function EmailListItem({ email, selected, onClick }) {
     unreadMutation.isLoading;
 
   const from = email.from.emailAddress;
+  const classes = [styles.emailListItem];
+  if (selected) classes.push(styles.selected);
 
   return (
-    <div
-      key={email.id}
-      onClick={onClick}
-      className={`${styles.emailListItem}${selected ? " selected" : ""}`}
-    >
+    <div key={email.id} onClick={onClick} className={classes.join(" ")}>
       <Avatar name={from.name} email={from.address} size={30} />
       <div className={styles.emailHeader}>
         <div className={styles.received}>
@@ -53,28 +51,26 @@ export default function EmailListItem({ email, selected, onClick }) {
           <i className="far fa-star"></i>
         </div>
         <div className={styles.body}>{email.bodyPreview}</div>
-        <div className={styles.iconContainer}>
-          {isLoading ? (
-            <div className={styles.loadingSpinner}>
-              <LoadingSpinner />
-            </div>
-          ) : (
-            <>
-              <i
-                className={`far fa-archive ${styles.icon}`}
-                onClick={handleArchiveClick}
-              ></i>
-              <i
-                className={`far fa-exclamation-square ${styles.icon}`}
-                onClick={handleSpamClick}
-              ></i>
-              <i
-                className={`far fa-envelope-open ${styles.icon}`}
-                onClick={handleUnreadClick}
-              ></i>
-            </>
-          )}
-        </div>
+        {isLoading ? (
+          <div className={styles.loadingSpinner}>
+            <LoadingSpinner />
+          </div>
+        ) : (
+          <div className={styles.iconContainer}>
+            <i
+              className={`far fa-archive ${styles.icon}`}
+              onClick={handleArchiveClick}
+            ></i>
+            <i
+              className={`far fa-exclamation-square ${styles.icon}`}
+              onClick={handleSpamClick}
+            ></i>
+            <i
+              className={`far fa-envelope-open ${styles.icon}`}
+              onClick={handleUnreadClick}
+            ></i>
+          </div>
+        )}
       </div>
     </div>
   );
