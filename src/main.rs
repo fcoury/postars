@@ -1,5 +1,6 @@
 mod api;
 mod auth;
+mod graph;
 
 use std::net::SocketAddr;
 
