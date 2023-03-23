@@ -54,22 +54,25 @@ export default function EmailListItem({ email, selected, onClick }) {
         </div>
         <div className={styles.body}>{email.bodyPreview}</div>
         <div className={styles.iconContainer}>
-          <i
-            className={`far fa-archive ${styles.icon}`}
-            onClick={handleArchiveClick}
-          ></i>
-          <i
-            className={`far fa-exclamation-square ${styles.icon}`}
-            onClick={handleSpamClick}
-          ></i>
-          <i
-            className={`far fa-envelope-open ${styles.icon}`}
-            onClick={handleUnreadClick}
-          ></i>
-          {isLoading && (
+          {isLoading ? (
             <div className={styles.loadingSpinner}>
               <LoadingSpinner />
             </div>
+          ) : (
+            <>
+              <i
+                className={`far fa-archive ${styles.icon}`}
+                onClick={handleArchiveClick}
+              ></i>
+              <i
+                className={`far fa-exclamation-square ${styles.icon}`}
+                onClick={handleSpamClick}
+              ></i>
+              <i
+                className={`far fa-envelope-open ${styles.icon}`}
+                onClick={handleUnreadClick}
+              ></i>
+            </>
           )}
         </div>
       </div>

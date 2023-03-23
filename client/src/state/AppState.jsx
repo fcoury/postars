@@ -28,13 +28,11 @@ function reducer(state, action) {
     case "removeEmail":
       return {
         ...state,
-        emails: state.emails.filter(
-          (email) => email.internal_id !== action.payload
-        ),
+        emails: state.emails.filter((email) => email.id !== action.payload),
       };
     case "updateEmail":
       const updatedEmails = state.emails.map((email) =>
-        email.internal_id === action.payload.internal_id
+        email.id === action.payload.id
           ? { ...email, ...action.payload.updates }
           : email
       );
