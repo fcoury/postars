@@ -1,4 +1,3 @@
-import { stripHtml } from "string-strip-html";
 import useEmailActions from "../../hooks/useEmailActions";
 import friendlyDate from "../../utils/friendlyDate";
 import Avatar from "../Avatar";
@@ -17,16 +16,16 @@ export default function EmailListItem({ email, selected, onClick }) {
 
   const handleArchiveClick = (event) => {
     event.stopPropagation();
-    archiveEmail(email.internal_id);
+    archiveEmail(email.id);
   };
 
   const handleSpamClick = (event) => {
     event.stopPropagation();
-    markAsSpam(email.internal_id);
+    markAsSpam(email.id);
   };
 
   const handleUnreadClick = () => {
-    toggleUnread(email.internal_id);
+    toggleUnread(email.id);
   };
 
   const isLoading =
@@ -34,26 +33,26 @@ export default function EmailListItem({ email, selected, onClick }) {
     spamMutation.isLoading ||
     unreadMutation.isLoading;
 
+  const from = email.from.emailAddress;
+
   return (
     <div
-      key={email.internal_id}
+      key={email.id}
       onClick={onClick}
       className={`${styles.emailListItem}${selected ? " selected" : ""}`}
     >
-      <Avatar name={email.from_name} email={email.from_addr} size={30} />
+      <Avatar name={from.name} email={from.address} size={30} />
       <div className={styles.emailHeader}>
         <div className={styles.received}>
           <i className="far fa-paperclip"></i>
-          {friendlyDate(email.date, true)}
+          {friendlyDate(email.receivedDateTime, true)}
         </div>
-        <div className={styles.sender}>{email.from_name}</div>
+        <div className={styles.sender}>{from.name}</div>
         <div className={styles.subject}>{email.subject}</div>
         <div className={styles.action}>
           <i className="far fa-star"></i>
         </div>
-        <div className={styles.body}>
-          {email.body ? stripHtml(email.body).result : "No preview available"}
-        </div>
+        <div className={styles.body}>{email.bodyPreview}</div>
         <div className={styles.iconContainer}>
           <i
             className={`far fa-archive ${styles.icon}`}
