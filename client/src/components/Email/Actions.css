@@ -5,7 +5,7 @@
   display: flex;
   justify-content: center;
   width: 100%;
-  border-bottom: var(--section-border);
+  border-bottom: var(-color-border-section);
 }
 
 .actions .left,
@@ -27,7 +27,7 @@
 
 .actions i,
 .actions .page {
-  color: var(--tertiary-text-color);
+  color: var(--color-text-tertiary);
 }
 
 .actions .left i {

@@ -1,25 +1,28 @@
+@import "../../Shared.module.css";
+
 .emailListItem {
   cursor: pointer;
   display: flex;
   align-items: flex-start;
   padding: 10px;
   position: relative;
-  border-bottom: var(--section-border);
+  border-bottom: var(-color-border-section);
 }
 
 .selected {
-  background-color: #f0f0f0;
+  border-left: var(--color-icon-selected-border);
+  background-color: var(--color-selected-background);
 }
 
 .emailListItem:hover {
-  background-color: #f7f7f7;
+  background-color: var(--color-hover-background);
 }
 
 .emailListItem .sender {
   grid-area: sender;
   font-size: 14px;
   align-items: center;
-  color: var(--secondary-text-color);
+  color: var(--color-text-secondary);
 }
 
 .emailListItem .subject {
@@ -28,12 +31,12 @@
   font-size: 16px;
   font-weight: bold;
   margin-bottom: 2px;
-  color: var(--title-text-color);
+  color: var(--color-text-title);
 }
 
 .emailListItem .body {
   margin: 5px 0;
-  color: var(--secondary-text-color);
+  color: var(--color-text-secondary);
   font-weight: 300;
   font-size: 13px;
   line-height: 1.5;
@@ -63,7 +66,7 @@
   grid-area: received;
   display: flex;
   align-items: center;
-  color: var(--tertiary-text-color);
+  color: var(--color-text-tertiary);
   font-size: 12px;
 }
 
@@ -76,7 +79,7 @@
 }
 
 .action {
-  color: var(--tertiary-text-color);
+  color: var(--color-text-tertiary);
   position: absolute;
   bottom: 10px;
   right: 10px;
@@ -113,7 +116,7 @@
 .icon {
   padding: 5px;
   cursor: pointer;
-  color: var(--tertiary-text-color);
+  color: var(--color-text-tertiary);
 }
 
 .icon:hover {

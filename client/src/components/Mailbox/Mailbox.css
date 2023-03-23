@@ -1,15 +1,17 @@
+@import "../../Shared.module.css";
+
 .mailbox {
   width: 500px;
   height: 100vh;
   display: flex;
   flex-direction: column;
-  border-right: var(--section-border);
+  border-right: var(-color-border-section);
   box-sizing: border-box;
 }
 
 .title {
   padding: 0 20px;
-  border-bottom: var(--section-border);
+  border-bottom: var(-color-border-section);
   flex-shrink: 0;
 }
 

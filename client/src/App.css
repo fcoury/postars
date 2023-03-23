@@ -1,14 +1,31 @@
 :root {
-  --background-color: #fff;
-  --section-border: 1px solid #f3f3f3;
-  --icon-color: #5f5f61;
-  --icon-hover-background: #f7f7f7;
-  --icon-selected-color: #4368ae;
-  --icon-selected-background: #eef8ff;
-  --icon-selected-border: 4px solid #2d62c9;
-  --title-text-color: #202127;
-  --secondary-text-color: #606063;
-  --tertiary-text-color: #b3b6b7;
+  /* Light mode variables */
+  --color-background: #fff;
+  --color-border-section: #f3f3f3;
+  --color-icon: #5f5f61;
+  --color-icon-hover-background: #f7f7f7;
+  --color-icon-selected: #4368ae;
+  --color-icon-selected-background: #eef8ff;
+  --color-icon-selected-border: 4px solid #2d62c9;
+  --color-text-title: #202127;
+  --color-text-secondary: #606063;
+  --color-text-tertiary: #b3b6b7;
+  --color-selected-background: #f0f0f0;
+  --color-hover-background: #f7f7f7;
+
+  /* Dark mode variables */
+  --color-background-dark: #2c2c2e;
+  --color-border-section-dark: #4a4a4e;
+  --color-icon-dark: #a9a9a9;
+  --color-icon-hover-background-dark: #3a3a3c;
+  --color-icon-selected-dark: #5887ff;
+  --color-icon-selected-background-dark: #1c1c1e;
+  --color-icon-selected-border-dark: 4px solid #0a84ff;
+  --color-text-title-dark: #f5f5f5;
+  --color-text-secondary-dark: #9e9e9e;
+  --color-text-tertiary-dark: #6d6d6f;
+  --color-selected-background: #3a3a3c;
+  --color-hover-background: #434245;
 }
 
 html,
@@ -17,7 +34,7 @@ body {
   height: 100%;
   margin: 0;
   padding: 0;
-  background-color: var(--background-color);
+  background-color: var(--color-background);
 }
 
 .container {

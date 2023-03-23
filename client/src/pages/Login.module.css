@@ -12,13 +12,13 @@
 .login__title {
   font-size: 3rem;
   margin-bottom: 1rem;
-  color: var(--title-text-color);
+  color: var(--color-text-title);
 }
 
 /* Style the Microsoft login button */
 button {
-  background-color: var(--icon-selected-color);
-  color: var(--background-color);
+  background-color: var(--color-icon-selected);
+  color: var(--color-background);
   font-size: 1rem;
   padding: 0.5rem 1rem;
   border: none;
