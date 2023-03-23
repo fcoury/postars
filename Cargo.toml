@@ -7,7 +7,7 @@ version = "0.1.0"
 anyhow = "1.0.69"
 axum = {version = "0.6.10", features = ["macros", "headers"]}
 axum-error = "0.2.0"
-axum-extra = "0.7.2"
+axum-extra = {version = "0.5", features = ["spa"]}
 bitflags = {version = "2.0.0", features = ["serde"]}
 chrono = {version = "0.4.24", features = ["serde"]}
 clap = {version = "4.1.8", features = ["derive"]}
