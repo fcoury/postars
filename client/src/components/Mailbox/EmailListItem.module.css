@@ -7,7 +7,7 @@
   border-bottom: var(--section-border);
 }
 
-.emailListItem.selected {
+.selected {
   background-color: #f0f0f0;
 }
 
@@ -90,11 +90,15 @@
   display: none;
 }
 
-.iconContainer i {
+.loadingSpinner {
+  position: absolute;
+  top: 30px;
+  right: 0;
+  transform: translateY(-50%);
   margin-right: 8px;
 }
 
-.iconContainer .loadingSpinner {
+.iconContainer i {
   margin-right: 8px;
 }
 
