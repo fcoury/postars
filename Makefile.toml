@@ -1,0 +1,8 @@
+[tasks.dev-ui]
+script = "cd client && yarn && yarn dev"
+
+[tasks.dev-api]
+script = "cargo watch --ignore 'client/*' -x 'run -- --debug serve'"
+
+[tasks.dev]
+run_task = {name = ["dev-ui", "dev-api"], parallel = true}

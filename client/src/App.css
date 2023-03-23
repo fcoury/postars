@@ -1,0 +1,26 @@
+:root {
+  --background-color: #fff;
+  --section-border: 1px solid #f3f3f3;
+  --icon-color: #5f5f61;
+  --icon-hover-background: #f7f7f7;
+  --icon-selected-color: #4368ae;
+  --icon-selected-background: #eef8ff;
+  --icon-selected-border: 4px solid #2d62c9;
+  --title-text-color: #202127;
+  --secondary-text-color: #606063;
+  --tertiary-text-color: #b3b6b7;
+}
+
+html,
+body {
+  font-family: "Roboto", sans-serif;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  background-color: var(--background-color);
+}
+
+.container {
+  display: flex;
+  height: 100vh;
+}

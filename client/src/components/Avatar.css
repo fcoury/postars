@@ -1,0 +1,12 @@
+/* Avatar.css */
+.avatar {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #f0f0f0;
+  border-radius: 50%;
+  overflow: hidden;
+  text-align: center;
+  color: #fff;
+  font-weight: bold;
+}
