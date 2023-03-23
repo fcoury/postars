@@ -1,5 +1,8 @@
+use std::collections::HashMap;
+
 use reqwest::Client;
-use serde_json::Value;
+use serde::{de::DeserializeOwned, Deserialize, Serialize};
+use serde_json::{json, Value};
 use thiserror::Error;
 
 const GRAPH_API_BASE_URL: &str = "https://graph.microsoft.com/v1.0";
@@ -17,9 +20,10 @@ pub enum GraphClientError {
 
     #[error("Failed to parse {0}: {1}")]
     Parse(&'static str, Value),
-}
 
-use serde::{Deserialize, Serialize};
+    #[error("Folder not found: {0}")]
+    FolderNotFound(String),
+}
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
@@ -95,6 +99,7 @@ pub struct Flag {
 pub struct GraphClient {
     client: Client,
     access_token: String,
+    folder_cache: HashMap<String, String>,
 }
 
 impl GraphClient {
@@ -103,33 +108,13 @@ impl GraphClient {
         Self {
             client,
             access_token,
+            folder_cache: HashMap::new(),
         }
     }
 
     pub async fn get_user_folders(&self) -> Result<Vec<Folder>, GraphClientError> {
         let url = format!("{}/me/mailFolders", GRAPH_API_BASE_URL);
-        let response = self
-            .client
-            .get(&url)
-            .bearer_auth(&self.access_token)
-            .send()
-            .await?;
-
-        if response.status().is_success() {
-            let json: Value = response.json().await?;
-            let folders_value = json["value"]
-                .as_array()
-                .ok_or_else(|| GraphClientError::Parse("folders", json.clone()))?;
-
-            let folders: Result<Vec<Folder>, serde_json::Error> = folders_value
-                .iter()
-                .map(|folder_value| serde_json::from_value(folder_value.clone()))
-                .collect();
-
-            Ok(folders?)
-        } else {
-            Err(GraphClientError::Request(response.status()))
-        }
+        self.fetch_all_items::<Folder>(&url).await
     }
 
     pub async fn get_user_emails(&self) -> Result<Vec<Email>, GraphClientError> {
@@ -190,6 +175,74 @@ impl GraphClient {
         }
     }
 
+    pub async fn get_email_by_id(&self, email_id: &str) -> Result<Email, GraphClientError> {
+        let url = format!("{}/me/messages/{}", GRAPH_API_BASE_URL, email_id);
+        let response = self
+            .client
+            .get(&url)
+            .bearer_auth(&self.access_token)
+            .send()
+            .await?;
+
+        if response.status().is_success() {
+            let email: Email = response.json().await?;
+
+            Ok(email)
+        } else {
+            Err(GraphClientError::Request(response.status()))
+        }
+    }
+
+    pub async fn move_email_to_folder(
+        &self,
+        email_id: &str,
+        folder_id: &str,
+    ) -> Result<Email, GraphClientError> {
+        let url = format!("{}/me/messages/{}/move", GRAPH_API_BASE_URL, email_id);
+        let payload = json!({ "destinationId": folder_id });
+
+        let response = self
+            .client
+            .post(&url)
+            .bearer_auth(&self.access_token)
+            .json(&payload)
+            .send()
+            .await?;
+
+        if response.status().is_success() {
+            let email: Email = response.json().await?;
+            Ok(email)
+        } else {
+            Err(GraphClientError::Request(response.status()))
+        }
+    }
+
+    pub async fn move_email_to_folder_by_name(
+        &mut self,
+        email_id: &str,
+        folder_name: &str,
+    ) -> Result<Email, GraphClientError> {
+        let folder_id = match self.folder_cache.get(folder_name) {
+            Some(folder_id) => folder_id.to_string(),
+            None => {
+                let folders = self.get_user_folders().await?;
+                if let Some(folder) = folders
+                    .into_iter()
+                    .find(|f| f.display_name.to_lowercase() == folder_name.to_lowercase())
+                {
+                    let folder_id = folder.id;
+                    self.folder_cache
+                        .insert(folder_name.to_string(), folder_id.clone());
+                    folder_id
+                } else {
+                    return Err(GraphClientError::FolderNotFound(folder_name.to_string()));
+                }
+            }
+        };
+
+        self.move_email_to_folder(email_id, &folder_id).await
+    }
+
     pub async fn get_user_profile(&self) -> Result<Value, GraphClientError> {
         let url = format!("{}/me", GRAPH_API_BASE_URL);
         let response = self
@@ -205,6 +258,45 @@ impl GraphClient {
         } else {
             Err(GraphClientError::Request(response.status()))
         }
+    }
+
+    async fn fetch_all_items<T: DeserializeOwned>(
+        &self,
+        base_url: &str,
+    ) -> Result<Vec<T>, GraphClientError> {
+        let mut items = Vec::new();
+        let mut next_link: Option<String> = Some(base_url.to_string());
+
+        while let Some(url) = next_link {
+            let response = self
+                .client
+                .get(&url)
+                .bearer_auth(&self.access_token)
+                .send()
+                .await?;
+
+            if response.status().is_success() {
+                let json: Value = response.json().await?;
+                let item_values = json["value"]
+                    .as_array()
+                    .ok_or_else(|| GraphClientError::Parse("items", json.clone()))?;
+
+                let deserialized_items: Vec<T> = item_values
+                    .iter()
+                    .map(|item_value| serde_json::from_value(item_value.clone()))
+                    .collect::<Result<Vec<T>, _>>()?;
+
+                items.extend(deserialized_items);
+
+                next_link = json["@odata.nextLink"]
+                    .as_str()
+                    .map(|link| link.to_string());
+            } else {
+                return Err(GraphClientError::Request(response.status()));
+            }
+        }
+
+        Ok(items)
     }
 }
 

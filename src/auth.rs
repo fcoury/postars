@@ -59,7 +59,7 @@ pub fn auth() -> Result<Token, AuthError> {
     let (authorize_url, csrf_state) = client
         .authorize_url(CsrfToken::new_random)
         .add_scope(Scope::new(
-            "openid profile email offline_access https://graph.microsoft.com/Mail.Read".to_string(),
+            "openid profile email offline_access https://graph.microsoft.com/Mail.Read https://graph.microsoft.com/Mail.ReadWrite".to_string(),
         ))
         .set_pkce_challenge(pkce_code_challenge)
         .url();

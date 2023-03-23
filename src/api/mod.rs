@@ -7,14 +7,13 @@ use axum::{
     Json, Router, TypedHeader,
 };
 use axum_error::*;
-use email::Email;
 use fehler::throws;
 use serde_json::json;
 use tower_http::cors::{AllowHeaders, AllowMethods, AllowOrigin, CorsLayer};
 use tower_http::trace::TraceLayer;
 use tracing::info;
 
-use crate::graph::{Email as GraphEmail, Folder, GraphClient};
+use crate::graph::{Email, Folder, GraphClient};
 
 pub mod email;
 
@@ -38,10 +37,10 @@ impl Server {
         Router::new()
             .route("/api/emails", get(get_emails))
             .route("/api/emails/move/:folder", put(put_bulk_move))
-            .route("/api/emails/:internal_id", get(get_email))
-            .route("/api/emails/:internal_id/move/:folder", put(put_move))
-            .route("/api/emails/:internal_id/archive", put(put_archive))
-            .route("/api/emails/:internal_id/spam", put(put_mark_spam))
+            .route("/api/emails/:id", get(get_email))
+            .route("/api/emails/:id/move/:folder", put(put_move))
+            .route("/api/emails/:id/archive", put(put_archive))
+            .route("/api/emails/:id/spam", put(put_mark_spam))
             .route("/api/folders", get(get_folders))
             .route("/api/:folder/emails", get(get_folder_emails))
             .layer(
@@ -57,7 +56,7 @@ impl Server {
 #[throws]
 async fn get_emails(
     TypedHeader(access_code): TypedHeader<Authorization<Bearer>>,
-) -> Json<Vec<GraphEmail>> {
+) -> Json<Vec<Email>> {
     let client = GraphClient::new(access_code.token().to_owned());
     Json(client.get_user_emails().await?)
 }
@@ -74,7 +73,7 @@ async fn get_folders(
 async fn get_folder_emails(
     TypedHeader(access_code): TypedHeader<Authorization<Bearer>>,
     Path(folder): Path<String>,
-) -> Json<Vec<GraphEmail>> {
+) -> Json<Vec<Email>> {
     let client = GraphClient::new(access_code.token().to_owned());
     Json(client.get_user_emails_from_folder(&folder).await?)
 }
@@ -82,11 +81,10 @@ async fn get_folder_emails(
 #[throws]
 async fn get_email(
     TypedHeader(access_code): TypedHeader<Authorization<Bearer>>,
-    Path(internal_id): Path<String>,
-) -> Json<String> {
-    info!("Get email {}", internal_id);
-    let server = email::Server::new(access_code.token().to_owned())?;
-    Json(server.fetch_body("INBOX", &internal_id)?)
+    Path(id): Path<String>,
+) -> Json<Email> {
+    let client = GraphClient::new(access_code.token().to_owned());
+    Json(client.get_email_by_id(&id).await?)
 }
 
 #[throws]
@@ -106,13 +104,15 @@ async fn put_bulk_move(
 #[throws]
 async fn put_move(
     TypedHeader(access_code): TypedHeader<Authorization<Bearer>>,
-    Path((internal_id, folder)): Path<(String, String)>,
-) -> Json<serde_json::Value> {
-    info!("Moving {internal_id} to {folder}...");
-    let server = email::Server::new(access_code.token().to_owned())?;
-    // FIXME assuming INBOX for the folder
-    server.move_emails("INBOX", &folder, vec![&internal_id])?;
-    Json(json!({ "ok": true }))
+    Path((email_id, folder_name)): Path<(String, String)>,
+) -> Json<Email> {
+    info!("Moving {email_id} to {folder_name}...");
+    let mut client = GraphClient::new(access_code.token().to_owned());
+    Json(
+        client
+            .move_email_to_folder_by_name(&email_id, &folder_name)
+            .await?,
+    )
 }
 
 #[throws]
