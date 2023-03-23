@@ -27,6 +27,22 @@ pub enum GraphClientError {
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
+pub struct Profile {
+    pub business_phones: Vec<String>,
+    pub display_name: String,
+    pub given_name: String,
+    pub id: String,
+    pub job_title: Option<String>,
+    pub mail: String,
+    pub mobile_phone: Option<String>,
+    pub office_location: Option<String>,
+    pub preferred_language: Option<String>,
+    pub surname: String,
+    pub user_principal_name: String,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
 pub struct Folder {
     pub child_folder_count: u32,
     pub display_name: String,
@@ -186,7 +202,6 @@ impl GraphClient {
 
         if response.status().is_success() {
             let email: Email = response.json().await?;
-
             Ok(email)
         } else {
             Err(GraphClientError::Request(response.status()))
@@ -243,7 +258,24 @@ impl GraphClient {
         self.move_email_to_folder(email_id, &folder_id).await
     }
 
-    pub async fn get_user_profile(&self) -> Result<Value, GraphClientError> {
+    pub async fn move_emails_to_folder_by_name(
+        &mut self,
+        email_ids: Vec<String>,
+        folder_name: &str,
+    ) -> Result<Vec<Email>, GraphClientError> {
+        let mut moved_emails = Vec::new();
+
+        for email_id in email_ids {
+            let moved_email = self
+                .move_email_to_folder_by_name(&email_id, folder_name)
+                .await?;
+            moved_emails.push(moved_email);
+        }
+
+        Ok(moved_emails)
+    }
+
+    pub async fn get_user_profile(&self) -> Result<Profile, GraphClientError> {
         let url = format!("{}/me", GRAPH_API_BASE_URL);
         let response = self
             .client
@@ -253,7 +285,7 @@ impl GraphClient {
             .await?;
 
         if response.status().is_success() {
-            let json: Value = response.json().await?;
+            let json: Profile = response.json().await?;
             Ok(json)
         } else {
             Err(GraphClientError::Request(response.status()))
