@@ -39,6 +39,7 @@ export default function Sidebar() {
         "--color-icon-selected-border",
         "4px solid #0a84ff"
       );
+      document.documentElement.style.setProperty("--color-text", "#fff");
       document.documentElement.style.setProperty(
         "--color-text-title",
         "#f5f5f5"
@@ -82,6 +83,7 @@ export default function Sidebar() {
         "--color-icon-selected-border",
         "4px solid #2d62c9"
       );
+      document.documentElement.style.setProperty("--color-text", "#000");
       document.documentElement.style.setProperty(
         "--color-text-title",
         "#202127"

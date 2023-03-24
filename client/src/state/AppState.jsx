@@ -13,6 +13,13 @@ const initialState = {
 };
 
 function reducer(state, action) {
+  const result = reducerx(state, action);
+  console.log("result", result);
+  return result;
+}
+
+function reducerx(state, action) {
+  console.log("reducer", action);
   switch (action.type) {
     case "setLoggedIn":
       return { ...state, isLoggedIn: action.payload };

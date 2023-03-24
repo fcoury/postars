@@ -12,7 +12,7 @@ export default function Header() {
   const from = email.from.emailAddress;
 
   return (
-    <>
+    <div className="header">
       <div className="summary">
         <Avatar name={from.name} email={from.address} size={50} />
         <div className="sender-info">
@@ -22,7 +22,7 @@ export default function Header() {
         <div className="received">{friendlyDate(email.receivedDateTime)}</div>
       </div>
       <div className="subject">{email.subject}</div>
-    </>
+    </div>
   );
 }
 1;
