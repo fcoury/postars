@@ -61,9 +61,9 @@ function reducer(state, action) {
       };
 
     case "nextEmail":
-      const currentIndex = state.emails.findIndex(
-        (email) => email.id === state.email.id
-      );
+      const currentIndex = state.email
+        ? state.emails.findIndex((email) => email.id === state.email.id)
+        : 0;
 
       if (currentIndex < state.emails.length - 1) {
         return {
