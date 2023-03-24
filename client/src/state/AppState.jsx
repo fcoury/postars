@@ -8,27 +8,40 @@ const initialState = {
   loadingEmails: false,
   loadingEmail: false,
   isLoggedIn: false,
+  currentEmailIndex: null,
+  totalEmails: 0,
 };
 
 function reducer(state, action) {
   switch (action.type) {
     case "setLoggedIn":
       return { ...state, isLoggedIn: action.payload };
+
     case "setLoggedOut":
       return { ...state, isLoggedIn: false };
+
     case "setLoadingEmails":
       return { ...state, loadingEmails: action.payload };
+
     case "setLoadingEmail":
       return { ...state, loadingEmail: action.payload };
+
     case "setEmails":
-      return { ...state, emails: action.payload };
+      return {
+        ...state,
+        emails: action.payload,
+        totalEmails: action.payload.length,
+      };
+
     case "clearEmails":
       return { ...state, emails: [] };
+
     case "removeEmail":
       return {
         ...state,
         emails: state.emails.filter((email) => email.id !== action.payload),
       };
+
     case "updateEmail":
       const updatedEmails = state.emails.map((email) =>
         email.id === action.payload.id
@@ -36,8 +49,45 @@ function reducer(state, action) {
           : email
       );
       return { ...state, emails: updatedEmails };
+
     case "setSelectedEmail":
-      return { ...state, email: action.payload };
+      const selectedIndex = state.emails.findIndex(
+        (email) => email.id === action.payload.id
+      );
+      return {
+        ...state,
+        email: action.payload,
+        currentEmailIndex: selectedIndex,
+      };
+
+    case "nextEmail":
+      const currentIndex = state.emails.findIndex(
+        (email) => email.id === state.email.id
+      );
+
+      if (currentIndex < state.emails.length - 1) {
+        return {
+          ...state,
+          email: state.emails[currentIndex + 1],
+          currentEmailIndex: currentIndex + 1,
+        };
+      }
+      return state;
+
+    case "previousEmail":
+      const prevIndex = state.emails.findIndex(
+        (email) => email.id === state.email.id
+      );
+
+      if (prevIndex > 0) {
+        return {
+          ...state,
+          email: state.emails[prevIndex - 1],
+          currentEmailIndex: prevIndex - 1,
+        };
+      }
+      return state;
+
     default:
       throw new Error();
   }

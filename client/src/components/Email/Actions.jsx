@@ -1,6 +1,9 @@
+import { useAppState } from "../../state/AppState";
 import "./Actions.css";
 
 export default function Actions() {
+  const { state } = useAppState();
+
   return (
     <div className="actions">
       <div className="left">
@@ -10,7 +13,9 @@ export default function Actions() {
       </div>
       <div className="middle">
         <i className="far fa-chevron-left"></i>
-        <div className="page">1 of 15</div>
+        <div className="page">
+          {state.currentEmailIndex + 1} of {state.totalEmails}
+        </div>
         <i className="far fa-chevron-right"></i>
       </div>
       <div className="right">
