@@ -1,0 +1,24 @@
+.container {
+  display: flex;
+  height: 100vh;
+}
+
+.blankState {
+  color: var(--color-text-tertiary);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex-grow: 1;
+  text-align: center;
+}
+
+.blankStateIcon {
+  font-size: 48px;
+  margin-bottom: 24px;
+}
+
+.blankStateText {
+  font-size: 18px;
+  font-weight: 500;
+}

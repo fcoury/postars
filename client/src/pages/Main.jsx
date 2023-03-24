@@ -47,6 +47,10 @@ function Main() {
             dispatch({ type: "removeEmailLoading", payload: id });
           });
           break;
+
+        case "Escape":
+          dispatch({ type: "unselectEmail" });
+          break;
       }
     };
 

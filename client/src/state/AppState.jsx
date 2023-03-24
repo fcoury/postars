@@ -111,6 +111,9 @@ function reducerx(state, action) {
         ),
       };
 
+    case "unselectEmail":
+      return { ...state, email: null, currentEmailIndex: null };
+
     default:
       throw new Error();
   }
