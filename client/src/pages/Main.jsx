@@ -6,9 +6,11 @@ import Login from "./Login";
 
 function Main() {
   const { state, dispatch } = useAppState();
-  const { archiveEmail } = useEmailActions();
+  const { archiveEmail, markAsSpam } = useEmailActions();
 
   useEffect(() => {
+    const id = state.email?.id;
+
     const handleKeyDown = (event) => {
       console.log("hit", event.key);
       switch (event.key) {
@@ -16,13 +18,34 @@ function Main() {
         case "ArrowUp":
           dispatch({ type: "previousEmail" });
           break;
+
         case "j":
         case "ArrowDown":
           dispatch({ type: "nextEmail" });
           break;
+
         case "e":
-          console.log("state", state);
-          archiveEmail(state.email.id);
+          if (!id) {
+            return;
+          }
+
+          dispatch({ type: "addEmailLoading", payload: id });
+          archiveEmail(id).finally(() => {
+            dispatch({ type: "nextEmail" });
+            dispatch({ type: "removeEmailLoading", payload: id });
+          });
+          break;
+
+        case "!":
+          if (!id) {
+            return;
+          }
+
+          dispatch({ type: "addEmailLoading", payload: id });
+          markAsSpam(id).finally(() => {
+            dispatch({ type: "nextEmail" });
+            dispatch({ type: "removeEmailLoading", payload: id });
+          });
           break;
       }
     };

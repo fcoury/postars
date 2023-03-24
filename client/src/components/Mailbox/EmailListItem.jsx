@@ -1,10 +1,12 @@
 import useEmailActions from "../../hooks/useEmailActions";
+import { useAppState } from "../../state/AppState";
 import friendlyDate from "../../utils/friendlyDate";
 import Avatar from "../Avatar";
 import styles from "./EmailListItem.module.css";
 import LoadingSpinner from "./LoadingSpinner";
 
 export default function EmailListItem({ email, selected, onClick }) {
+  const { state } = useAppState();
   const {
     archiveEmail,
     archiveMutation,
@@ -29,6 +31,7 @@ export default function EmailListItem({ email, selected, onClick }) {
   };
 
   const isLoading =
+    state.emailsLoading?.includes(email.id) ||
     archiveMutation.isLoading ||
     spamMutation.isLoading ||
     unreadMutation.isLoading;

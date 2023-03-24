@@ -10,6 +10,7 @@ const initialState = {
   isLoggedIn: false,
   currentEmailIndex: null,
   totalEmails: 0,
+  emailsLoading: [],
 };
 
 function reducer(state, action) {
@@ -19,6 +20,7 @@ function reducer(state, action) {
 }
 
 function reducerx(state, action) {
+  console.log("state", state);
   console.log("reducer", action);
   switch (action.type) {
     case "setLoggedIn":
@@ -94,6 +96,20 @@ function reducerx(state, action) {
         };
       }
       return state;
+
+    case "addEmailLoading":
+      return {
+        ...state,
+        emailsLoading: [...state.emailsLoading, action.payload],
+      };
+
+    case "removeEmailLoading":
+      return {
+        ...state,
+        emailsLoading: state.emailsLoading.filter(
+          (id) => id !== action.payload
+        ),
+      };
 
     default:
       throw new Error();
