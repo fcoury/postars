@@ -30,6 +30,21 @@
   color: var(--color-text-tertiary);
 }
 
+.actions i {
+  cursor: pointer;
+}
+
+.actions i.disabled {
+  color: var(--color-text-disabled);
+  cursor: default;
+}
+
+.actions i:not(.disabled):hover {
+  color: var(--primary-color);
+  background-color: rgba(0, 0, 0, 0.05);
+  border-radius: 50%;
+}
+
 .actions .left i {
   margin-right: 20px;
 }
