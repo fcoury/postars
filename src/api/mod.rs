@@ -8,12 +8,15 @@ use axum::{
 };
 use axum_error::*;
 use axum_extra::routing::SpaRouter;
-use fehler::throws;
 use tower_http::cors::{AllowHeaders, AllowMethods, AllowOrigin, CorsLayer};
 use tower_http::trace::TraceLayer;
 use tracing::info;
 
 use crate::graph::{Email, Folder, GraphClient, Profile};
+
+use self::error::AppError;
+
+mod error;
 
 pub struct Server {
     addr: SocketAddr,
@@ -53,99 +56,90 @@ impl Server {
     }
 }
 
-#[throws]
 async fn get_profile(
     TypedHeader(access_code): TypedHeader<Authorization<Bearer>>,
-) -> Json<Profile> {
+) -> Result<Json<Profile>, AppError> {
     let client = GraphClient::new(access_code.token().to_owned());
-    Json(client.get_user_profile().await?)
+    Ok(Json(client.get_user_profile().await?))
 }
 
-#[throws]
 async fn get_emails(
     TypedHeader(access_code): TypedHeader<Authorization<Bearer>>,
-) -> Json<Vec<Email>> {
+) -> Result<Json<Vec<Email>>, AppError> {
     let client = GraphClient::new(access_code.token().to_owned());
-    Json(client.get_user_emails().await?)
+    Ok(Json(client.get_user_emails().await?))
 }
 
-#[throws]
 async fn get_folders(
     TypedHeader(access_code): TypedHeader<Authorization<Bearer>>,
-) -> Json<Vec<Folder>> {
+) -> Result<Json<Vec<Folder>>, AppError> {
     let client = GraphClient::new(access_code.token().to_owned());
-    Json(client.get_user_folders().await?)
+    Ok(Json(client.get_user_folders().await?))
 }
 
-#[throws]
 async fn get_folder_emails(
     TypedHeader(access_code): TypedHeader<Authorization<Bearer>>,
     Path(folder): Path<String>,
-) -> Json<Vec<Email>> {
+) -> Result<Json<Vec<Email>>, AppError> {
     let client = GraphClient::new(access_code.token().to_owned());
-    Json(client.get_user_emails_from_folder(&folder).await?)
+    Ok(Json(client.get_user_emails_from_folder(&folder).await?))
 }
 
-#[throws]
 async fn get_email(
     TypedHeader(access_code): TypedHeader<Authorization<Bearer>>,
     Path(id): Path<String>,
-) -> Json<Email> {
+) -> Result<Json<Email>, AppError> {
     let client = GraphClient::new(access_code.token().to_owned());
-    Json(client.get_email_by_id(&id).await?)
+    Ok(Json(client.get_email_by_id(&id).await?))
 }
 
-#[throws]
 async fn put_bulk_move(
     TypedHeader(access_code): TypedHeader<Authorization<Bearer>>,
     Path(folder): Path<String>,
     Json(email_ids): Json<Vec<String>>,
-) -> Json<Vec<Email>> {
+) -> Result<Json<Vec<Email>>, AppError> {
     info!("Moving {email_ids:?} to {folder}...");
     let mut client = GraphClient::new(access_code.token().to_owned());
-    Json(
+    Ok(Json(
         client
             .move_emails_to_folder_by_name(email_ids, &folder)
             .await?,
-    )
+    ))
 }
 
-#[throws]
 async fn put_move(
     TypedHeader(access_code): TypedHeader<Authorization<Bearer>>,
     Path((email_id, folder_name)): Path<(String, String)>,
-) -> Json<Email> {
+) -> Result<Json<Email>, AppError> {
     info!("Moving {email_id} to {folder_name}...");
     let mut client = GraphClient::new(access_code.token().to_owned());
-    Json(
+    Ok(Json(
         client
             .move_email_to_folder_by_name(&email_id, &folder_name)
             .await?,
-    )
+    ))
 }
 
-#[throws]
 async fn put_archive(
     TypedHeader(access_code): TypedHeader<Authorization<Bearer>>,
     Path(email_id): Path<String>,
-) -> Json<Email> {
+) -> Result<Json<Email>, AppError> {
     let mut client = GraphClient::new(access_code.token().to_owned());
-    Json(
+    Ok(Json(
         client
             .move_email_to_folder_by_name(&email_id, "Archive")
             .await?,
-    )
+    ))
 }
 
-#[throws]
 async fn put_mark_spam(
     TypedHeader(access_code): TypedHeader<Authorization<Bearer>>,
     Path(email_id): Path<String>,
-) -> Json<Email> {
+) -> Result<Json<Email>, AppError> {
     let mut client = GraphClient::new(access_code.token().to_owned());
-    Json(
+    Ok(Json(
         client
             .move_email_to_folder_by_name(&email_id, "Junk Email")
             .await?,
-    )
+    ))
 }
