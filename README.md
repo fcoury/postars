@@ -1,4 +1,4 @@
-# postars
+# post.rs
 
 A multi platform email engine for a Microsoft Office 365 backend using IMAP.
 
@@ -15,13 +15,12 @@ A multi platform email engine for a Microsoft Office 365 backend using IMAP.
 
 ## Roadmap
 
-- [ ] Fetch message envelopes
-- [ ] Fetch message bodies
-- [ ] Parse message bodies
-- [ ] Archive
-- [ ] Report Spam
+- [x] Fetch messages (DONE)
+- [x] Parse message bodies (DONE)
+- [x] Archive (DONE)
+- [x] Report Spam (DONE)
+- [ ] Own Spam filtering (STARTED)
 - [ ] Offline mode
-- [ ] Own Spam filtering
 
 ## Setup Azure app for auth
 
