@@ -8,6 +8,10 @@ const MicrosoftAuthButton = ({ clientId, authority, scopes }) => {
       authority,
       redirectUri: window.location.origin,
     },
+    cache: {
+      cacheLocation: "localStorage", // Set cache location to localStorage
+      storeAuthStateInCookie: false, // Set to false to not store auth state in cookies
+    },
   };
 
   const pca = useMemo(
@@ -27,6 +31,20 @@ const MicrosoftAuthButton = ({ clientId, authority, scopes }) => {
         JSON.stringify(loginResponse.account)
       );
       localStorage.setItem("msalAccessToken", loginResponse.accessToken);
+
+      // Acquire a token silently to get the refresh token
+      const silentTokenRequest = {
+        ...loginRequest,
+        account: loginResponse.account,
+      };
+
+      const silentTokenResponse = await pca.acquireTokenSilent(
+        silentTokenRequest
+      );
+      localStorage.setItem(
+        "msalRefreshToken",
+        silentTokenResponse.refreshToken
+      );
 
       window.location.reload();
     } catch (error) {
