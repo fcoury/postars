@@ -1,9 +1,10 @@
 use std::collections::HashMap;
 
 use reqwest::Client;
-use serde::{de::DeserializeOwned, Deserialize, Serialize};
+use serde::{de::DeserializeOwned, Deserialize, Deserializer, Serialize};
 use serde_json::{json, Value};
 use thiserror::Error;
+use tracing::info;
 
 const GRAPH_API_BASE_URL: &str = "https://graph.microsoft.com/v1.0";
 
@@ -64,6 +65,7 @@ pub struct Email {
     pub sent_date_time: String,
     pub has_attachments: bool,
     pub internet_message_id: String,
+    #[serde(deserialize_with = "deserialize_null_default")]
     pub subject: String,
     pub body_preview: String,
     pub importance: String,
@@ -84,6 +86,15 @@ pub struct Email {
     pub bcc_recipients: Vec<EmailAddressWrapper>,
     pub reply_to: Vec<EmailAddressWrapper>,
     pub flag: Flag,
+}
+
+fn deserialize_null_default<'de, D, T>(deserializer: D) -> Result<T, D::Error>
+where
+    T: Default + Deserialize<'de>,
+    D: Deserializer<'de>,
+{
+    let opt = Option::deserialize(deserializer)?;
+    Ok(opt.unwrap_or_default())
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -176,6 +187,7 @@ impl GraphClient {
 
         if response.status().is_success() {
             let json: Value = response.json().await?;
+            info!("json: {}", serde_json::to_string_pretty(&json)?);
             let emails_value = json["value"]
                 .as_array()
                 .ok_or_else(|| GraphClientError::Parse("emails", json.clone()))?;
@@ -189,6 +201,14 @@ impl GraphClient {
         } else {
             Err(GraphClientError::Request(response.status()))
         }
+    }
+
+    pub async fn get_user_emails_from_folder_by_name(
+        &mut self,
+        folder_name: &str,
+    ) -> Result<Vec<Email>, GraphClientError> {
+        let folder_id = self.get_folder_id_by_name(folder_name).await?;
+        self.get_user_emails_from_folder(&folder_id).await
     }
 
     pub async fn get_email_by_id(&self, email_id: &str) -> Result<Email, GraphClientError> {
@@ -237,24 +257,7 @@ impl GraphClient {
         email_id: &str,
         folder_name: &str,
     ) -> Result<Email, GraphClientError> {
-        let folder_id = match self.folder_cache.get(folder_name) {
-            Some(folder_id) => folder_id.to_string(),
-            None => {
-                let folders = self.get_user_folders().await?;
-                if let Some(folder) = folders
-                    .into_iter()
-                    .find(|f| f.display_name.to_lowercase() == folder_name.to_lowercase())
-                {
-                    let folder_id = folder.id;
-                    self.folder_cache
-                        .insert(folder_name.to_string(), folder_id.clone());
-                    folder_id
-                } else {
-                    return Err(GraphClientError::FolderNotFound(folder_name.to_string()));
-                }
-            }
-        };
-
+        let folder_id = self.get_folder_id_by_name(folder_name).await?;
         self.move_email_to_folder(email_id, &folder_id).await
     }
 
@@ -330,6 +333,28 @@ impl GraphClient {
 
         Ok(items)
     }
+
+    async fn get_folder_id_by_name(
+        &mut self,
+        folder_name: &str,
+    ) -> Result<String, GraphClientError> {
+        if let Some(folder_id) = self.folder_cache.get(folder_name) {
+            return Ok(folder_id.to_string());
+        }
+
+        let folders = self.get_user_folders().await?;
+        if let Some(folder) = folders
+            .into_iter()
+            .find(|f| f.display_name.to_lowercase() == folder_name.to_lowercase())
+        {
+            let folder_id = folder.id;
+            self.folder_cache
+                .insert(folder_name.to_string(), folder_id.clone());
+            Ok(folder_id)
+        } else {
+            Err(GraphClientError::FolderNotFound(folder_name.to_string()))
+        }
+    }
 }
 
 #[cfg(test)]
@@ -357,5 +382,14 @@ mod tests {
         "#;
         let body: Body = serde_json::from_str(body).unwrap();
         assert_eq!(body.content_type, "html");
+    }
+
+    #[test]
+    fn test_empty_subject() {
+        let json = fs::read_to_string("src/fixtures/empty-subject.json").unwrap();
+        let json = serde_json::from_str::<Value>(&json).unwrap();
+        let email: Email = serde_json::from_value(json).unwrap();
+        assert_eq!(email.sender.email_address.name, "Sarah McFarlin");
+        assert_eq!(email.subject, "");
     }
 }

@@ -11,18 +11,22 @@ const useEmails = () => {
     data: _data,
     isLoading,
     error,
-  } = useQuery("emails", () => fetchData("/inbox/emails"), {
-    onFetching: () => {
-      dispatch({ type: "setLoadingEmails", payload: true });
-    },
-    onSuccess: (emails) => {
-      dispatch({ type: "setLoadingEmails", payload: false });
-      dispatch({ type: "setEmails", payload: emails });
-    },
-    onError: () => {
-      dispatch({ type: "setLoadingEmails", payload: false });
-    },
-  });
+  } = useQuery(
+    ["emails", state.currentFolder],
+    () => fetchData(`/${state.currentFolder}/emails`),
+    {
+      onFetching: () => {
+        dispatch({ type: "setLoadingEmails", payload: true });
+      },
+      onSuccess: (emails) => {
+        dispatch({ type: "setLoadingEmails", payload: false });
+        dispatch({ type: "setEmails", payload: emails });
+      },
+      onError: () => {
+        dispatch({ type: "setLoadingEmails", payload: false });
+      },
+    }
+  );
 
   const updateEmail = (id, updates) => {
     const updatedEmails = state.emails.map((email) =>

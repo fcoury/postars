@@ -30,7 +30,7 @@
   background-color: var(--color-icon-hover-background);
 }
 
-.iconList li.selected {
+.iconList li.active {
   background-color: var(--color-icon-selected-background);
   border-left: var(--color-icon-selected-border);
   color: var(--color-icon-selected);

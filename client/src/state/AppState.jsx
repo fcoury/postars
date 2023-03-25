@@ -3,6 +3,7 @@ import React, { createContext, useContext, useReducer } from "react";
 const AppStateContext = createContext();
 
 const initialState = {
+  currentFolder: "Inbox",
   emails: [],
   email: null,
   loadingEmails: false,
@@ -20,7 +21,7 @@ function reducer(state, action) {
 }
 
 function reducerx(state, action) {
-  console.log("state", state);
+  console.log("----");
   console.log("reducer", action);
   switch (action.type) {
     case "setLoggedIn":
@@ -111,8 +112,11 @@ function reducerx(state, action) {
         ),
       };
 
-    case "unselectEmail":
+    case "deselectEmail":
       return { ...state, email: null, currentEmailIndex: null };
+
+    case "setCurrentFolder":
+      return { ...state, currentFolder: action.payload };
 
     default:
       throw new Error();

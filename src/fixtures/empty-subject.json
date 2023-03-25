@@ -1,0 +1,54 @@
+{
+  "@odata.etag": "W/\"CQAAABYAAAD/jfqJkvFQT4qAXQCQpyzjAAIc9j/e\"",
+  "id": "AQMkADE4N2MzZmU2LTY4YTgtNDhmZC1iZGUxLWQwZDBlODJkYmQ3YwBGAAADujypRwSYbkqNFhIUvaYkxgcA-436iZLxUE_KgF0AkKcs4wAAAgEYAAAA-436iZLxUE_KgF0AkKcs4wACHj7YOgAAAA==",
+  "createdDateTime": "2023-03-25T01:09:17Z",
+  "lastModifiedDateTime": "2023-03-25T01:09:18Z",
+  "changeKey": "CQAAABYAAAD/jfqJkvFQT4qAXQCQpyzjAAIc9j/e",
+  "categories": [],
+  "receivedDateTime": "2023-03-25T01:09:18Z",
+  "sentDateTime": "2023-03-25T01:09:11Z",
+  "hasAttachments": false,
+  "internetMessageId": "<9c97c74d-a6ce-4469-b050-8760c8e6956d@omnidriven.me>",
+  "subject": null,
+  "bodyPreview": "You don't often get email from sara.mc@omnidriven.me. Learn why this is important",
+  "importance": "normal",
+  "parentFolderId": "AQMkADE4N2MzZmU2LTY4YTgtNDhmZC1iZGUxLWQwZDBlODJkYmQ3YwAuAAADujypRwSYbkqNFhIUvaYkxgEA-436iZLxUE_KgF0AkKcs4wAAAgEYAAAA",
+  "conversationId": "AAQkADE4N2MzZmU2LTY4YTgtNDhmZC1iZGUxLWQwZDBlODJkYmQ3YwAQAO9_Yrf1qppDmdDdQrhTzUc=",
+  "conversationIndex": "AQHZXrZs735it/WqmkOZ0N1CuFPNRw==",
+  "isDeliveryReceiptRequested": null,
+  "isReadReceiptRequested": false,
+  "isRead": false,
+  "isDraft": false,
+  "webLink": "https://outlook.office365.com/owa/?ItemID=AQMkADE4N2MzZmU2LTY4YTgtNDhmZC1iZGUxLWQwZDBlODJkYmQ3YwBGAAADujypRwSYbkqNFhIUvaYkxgcA%2F436iZLxUE%2BKgF0AkKcs4wAAAgEYAAAA%2F436iZLxUE%2BKgF0AkKcs4wACHj7YOgAAAA%3D%3D&exvsurl=1&viewmodel=ReadMessageItem",
+  "inferenceClassification": "focused",
+  "body": {
+    "contentType": "html",
+    "content": "<html><head>\r\n<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\"></head><body><table border=\"0\" cellspacing=\"0\" cellpadding=\"0\" width=\"100%\" align=\"left\" style=\"border:0; display:table; width:100%; table-layout:fixed; border-collapse:seperate; float:none\"><tbody style=\"display:block\"><tr><td valign=\"middle\" width=\"1px\" bgcolor=\"#A6A6A6\" cellpadding=\"7px 2px 7px 2px\" style=\"padding:7px 2px 7px 2px; background-color:#A6A6A6\"></td><td valign=\"middle\" width=\"100%\" bgcolor=\"#EAEAEA\" cellpadding=\"7px 5px 7px 15px\" color=\"#212121\" style=\"width:100%; background-color:#EAEAEA; padding:7px 5px 7px 15px; font-family:wf_segoe-ui_normal,Segoe UI,Segoe WP,Tahoma,Arial,sans-serif; font-size:12px; font-weight:normal; color:#212121; text-align:left; word-wrap:break-word\"><div>You don't often get email from sara.mc@omnidriven.me. <a href=\"https://aka.ms/LearnAboutSenderIdentification\">Learn why this is important</a></div></td><td valign=\"middle\" align=\"left\" width=\"75px\" bgcolor=\"#EAEAEA\" cellpadding=\"7px 5px 7px 5px\" color=\"#212121\" style=\"width:75px; background-color:#EAEAEA; padding:7px 5px 7px 5px; font-family:wf_segoe-ui_normal,Segoe UI,Segoe WP,Tahoma,Arial,sans-serif; font-size:12px; font-weight:normal; color:#212121; text-align:left; word-wrap:break-word\"></td></tr></tbody></table><div><img alt=\"\" src=\"https://inst.myomnidriven.com/tmid_a/kwKgYS_oObDYjk5WHu5lD\"></div></body></html>"
+  },
+  "sender": {
+    "emailAddress": {
+      "name": "Sarah McFarlin",
+      "address": "sara.mc@omnidriven.me"
+    }
+  },
+  "from": {
+    "emailAddress": {
+      "name": "Sarah McFarlin",
+      "address": "sara.mc@omnidriven.me"
+    }
+  },
+  "toRecipients": [
+    {
+      "emailAddress": {
+        "name": "Felipe Coury",
+        "address": "Felipe.Coury@methodiq.com"
+      }
+    }
+  ],
+  "ccRecipients": [],
+  "bccRecipients": [],
+  "replyTo": [],
+  "flag": {
+    "flagStatus": "notFlagged"
+  }
+}

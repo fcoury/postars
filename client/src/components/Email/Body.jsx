@@ -21,6 +21,17 @@ function EmailBody() {
 
       iframeDoc.open();
       iframeDoc.write(email.body.content);
+
+      if (!iframeDoc.documentElement) {
+        const htmlElement = iframeDoc.createElement("html");
+        iframeDoc.appendChild(htmlElement);
+      }
+
+      if (!iframeDoc.head) {
+        const headElement = iframeDoc.createElement("head");
+        iframeDoc.documentElement.appendChild(headElement);
+      }
+
       iframeDoc.head.appendChild(styleElement);
       iframeDoc.close();
     }

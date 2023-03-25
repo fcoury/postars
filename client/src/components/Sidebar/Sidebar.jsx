@@ -1,9 +1,13 @@
 import { useEffect, useState } from "react";
+import FOLDERS from "../../config/folders";
+import { useAppState } from "../../state/AppState";
 import Menu from "../Menu";
 import menuStyles from "../Menu.module.css";
 import styles from "./Sidebar.module.css";
 
 export default function Sidebar() {
+  const { state, dispatch } = useAppState();
+
   const [menuOpen, setMenuOpen] = useState(false);
   const [darkMode, setDarkMode] = useState(() => {
     const storedDarkMode = localStorage.getItem("darkMode");
@@ -48,6 +52,30 @@ export default function Sidebar() {
     };
   }, []);
 
+  const openFolder = (folder) => () => {
+    dispatch({ type: "setLoadingEmails", payload: true });
+    dispatch({ type: "setCurrentFolder", payload: folder });
+  };
+
+  const isFolderOpen = (folder) => {
+    const currentFolder = state.currentFolder;
+    return currentFolder === folder;
+  };
+
+  const styleForFolder = (folder) => {
+    return isFolderOpen(folder) ? styles.active : "";
+  };
+
+  const folderElements = FOLDERS.map(({ icon, folder }) => (
+    <li
+      className={styleForFolder(folder)}
+      key={folder}
+      onClick={openFolder(folder)}
+    >
+      <i className={icon}></i>
+    </li>
+  ));
+
   return (
     <div className={styles.sidebar}>
       <ul className={styles.iconList}>
@@ -55,24 +83,7 @@ export default function Sidebar() {
           <i className="far fa-bars"></i>
         </li>
         {menuOpen && <Menu />}
-        <li className={styles.selected}>
-          <i className="far fa-inbox"></i>
-        </li>
-        <li>
-          <i className="far fa-star"></i>
-        </li>
-        <li>
-          <i className="far fa-paper-plane"></i>
-        </li>
-        <li>
-          <i className="far fa-user-circle"></i>
-        </li>
-        <li>
-          <i className="far fa-exclamation-square"></i>
-        </li>
-        <li>
-          <i className="far fa-trash-alt"></i>
-        </li>
+        {folderElements}
       </ul>
       <ul className={`${styles.iconList} ${styles.bottomIcon}`}>
         <li onClick={toggleDarkMode}>

@@ -81,8 +81,10 @@ async fn get_folder_emails(
     TypedHeader(access_code): TypedHeader<Authorization<Bearer>>,
     Path(folder): Path<String>,
 ) -> Result<Json<Vec<Email>>, AppError> {
-    let client = GraphClient::new(access_code.token().to_owned());
-    Ok(Json(client.get_user_emails_from_folder(&folder).await?))
+    let mut client = GraphClient::new(access_code.token().to_owned());
+    Ok(Json(
+        client.get_user_emails_from_folder_by_name(&folder).await?,
+    ))
 }
 
 async fn get_email(
