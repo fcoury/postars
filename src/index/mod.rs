@@ -3,14 +3,14 @@ use std::sync::Mutex;
 use base64::{encode_config, URL_SAFE_NO_PAD};
 use meilisearch_sdk::Client;
 use postgres_queue::{TaskData, TaskError};
-use serde_json::Value;
+use serde_json::{json, Value};
 use sha2::{Digest, Sha256};
 use tokio::task::spawn_blocking;
 use tracing::info;
 
 use crate::{
     database::{Database, User},
-    graph::GraphClient,
+    graph::{Email, GraphClient},
 };
 
 pub async fn full_index_handler_sync(task_id: i32, task_data: TaskData) -> Result<(), TaskError> {
@@ -44,7 +44,7 @@ pub async fn full_index_handler(_task_id: i32, task_data: TaskData) -> Result<()
     };
 
     let database_url = std::env::var("DATABASE_URL").unwrap();
-    let database = Database::new(database_url).await.unwrap();
+    let database = Database::new(database_url.clone()).await.unwrap();
     let client = database.get().await.unwrap();
     let user = User::find(&client, user_email).await.unwrap().unwrap();
 
@@ -91,5 +91,43 @@ pub async fn full_index_handler(_task_id: i32, task_data: TaskData) -> Result<()
         .unwrap();
     info!("Meilisearch result: {:#?}", result);
 
+    // enqueue next task if has_more
+    if has_more {
+        let pool = postgres_queue::connect(&database_url)
+            .await
+            .expect("Failed to connect to the database");
+
+        let task_data = json!({
+            "user_email": user_email,
+            "start_page": start_page + num_pages,
+            "num_pages": num_pages,
+        });
+        postgres_queue::enqueue(
+            &pool.get().await.unwrap(),
+            "full_index",
+            task_data,
+            chrono::Utc::now(),
+            None,
+        )
+        .await?;
+    }
+
     Ok(())
+}
+
+pub async fn search(user_email: &str, term: &str) -> anyhow::Result<Vec<Email>> {
+    let database_url = std::env::var("DATABASE_URL").unwrap();
+    let database = Database::new(database_url.clone()).await.unwrap();
+    let client = database.get().await.unwrap();
+    let user = User::find(&client, user_email).await.unwrap().unwrap();
+
+    let client = Client::new("http://localhost:7700", "masterKey");
+    let results = client
+        .index(format!("emails_{}", user.id.unwrap()))
+        .search()
+        .with_query(term)
+        .execute()
+        .await?;
+    let emails: Vec<Email> = results.hits.into_iter().map(|hit| hit.result).collect();
+    Ok(emails)
 }

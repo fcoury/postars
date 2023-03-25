@@ -9,6 +9,7 @@ pub enum AppError {
     GraphClient(GraphClientError),
     Database(DatabaseError),
     Other(anyhow::Error),
+    BadRequest(String),
 }
 
 impl From<GraphClientError> for AppError {
@@ -79,6 +80,7 @@ impl IntoResponse for AppError {
                 let message = err.to_string();
                 (StatusCode::INTERNAL_SERVER_ERROR, message)
             }
+            AppError::BadRequest(message) => (StatusCode::BAD_REQUEST, message),
         };
 
         let error_response = CustomError::new(message, status);

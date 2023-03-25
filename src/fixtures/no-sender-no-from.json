@@ -1,0 +1,35 @@
+{
+  "@odata.etag": "W/\"CQAAABYAAAD/jfqJkvFQT4qAXQCQpyzjAAE+iPR2\"",
+  "id": "AQMkADE4N2MzZmU2LTY4YTgtNDhmZC1iZGUxLWQwZDBlODJkYmQ3YwBGAAADujypRwSYbkqNFhIUvaYkxgcA-436iZLxUE_KgF0AkKcs4wAAAgEKAAAA-436iZLxUE_KgF0AkKcs4wABPykXsQAAAA==",
+  "createdDateTime": "2022-03-02T19:48:37Z",
+  "lastModifiedDateTime": "2022-04-22T23:43:14Z",
+  "changeKey": "CQAAABYAAAD/jfqJkvFQT4qAXQCQpyzjAAE+iPR2",
+  "categories": [],
+  "receivedDateTime": "2022-03-02T19:48:38Z",
+  "sentDateTime": "2022-03-02T19:48:38Z",
+  "hasAttachments": true,
+  "internetMessageId": "<MW4PR15MB4539B708E89D23BD978550DCFD039@MW4PR15MB4539.namprd15.prod.outlook.com>",
+  "subject": null,
+  "bodyPreview": "Lorem. this is the body text",
+  "importance": "normal",
+  "parentFolderId": "AQMkADE4N2MzZmU2LTY4YTgtNDhmZC1iZGUxLWQwZDBlODJkYmQ3YwAuAAADujypRwSYbkqNFhIUvaYkxgEA-436iZLxUE_KgF0AkKcs4wAAAgEKAAAA",
+  "conversationId": "AAQkADE4N2MzZmU2LTY4YTgtNDhmZC1iZGUxLWQwZDBlODJkYmQ3YwAQABUU4X4y94JIggHxJzDOsdk=",
+  "conversationIndex": "AQHYLm6CFRThfjL3gkiCAfEnMM6x2Q==",
+  "isDeliveryReceiptRequested": null,
+  "isReadReceiptRequested": false,
+  "isRead": true,
+  "isDraft": true,
+  "webLink": "https://outlook.office365.com/owa/?ItemID=AQMkADE4N2MzZmU2LTY4YTgtNDhmZC1iZGUxLWQwZDBlODJkYmQ3YwBGAAADujypRwSYbkqNFhIUvaYkxgcA%2F436iZLxUE%2BKgF0AkKcs4wAAAgEKAAAA%2F436iZLxUE%2BKgF0AkKcs4wABPykXsQAAAA%3D%3D&exvsurl=1&viewmodel=ReadMessageItem",
+  "inferenceClassification": "focused",
+  "body": {
+    "contentType": "text",
+    "content": "Lorem. this is the body text\n"
+  },
+  "toRecipients": [],
+  "ccRecipients": [],
+  "bccRecipients": [],
+  "replyTo": [],
+  "flag": {
+    "flagStatus": "notFlagged"
+  }
+}

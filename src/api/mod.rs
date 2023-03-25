@@ -2,7 +2,7 @@ use std::net::SocketAddr;
 
 use axum::{
     debug_handler,
-    extract::Path,
+    extract::{Path, Query},
     headers::{authorization::Bearer, Authorization},
     routing::{get, post, put},
     Extension, Json, Router, TypedHeader,
@@ -17,6 +17,7 @@ use tracing::info;
 use crate::{
     database::{Database, User},
     graph::{Email, Folder, GraphClient, Profile},
+    index::search,
     token::get_payload_field,
 };
 
@@ -56,6 +57,7 @@ impl Server {
         Router::new()
             .route("/api/me", get(get_profile))
             .route("/api/token", post(post_token))
+            .route("/api/search", get(get_search))
             .route("/api/emails", get(get_emails))
             .route("/api/emails/move/:folder", put(put_bulk_move))
             .route("/api/emails/:id", get(get_email))
@@ -98,6 +100,35 @@ async fn post_token(
         User::upsert_with_tokens(&client, &email, &access_token, &data.refresh_token).await?;
 
     Ok(Json(user))
+}
+
+async fn get_search(
+    TypedHeader(access_code): TypedHeader<Authorization<Bearer>>,
+    Query(query): Query<serde_json::Value>,
+) -> Result<Json<Vec<Email>>, AppError> {
+    let client = GraphClient::new(access_code.token().to_owned());
+    let profile = client.get_user_profile().await?;
+
+    // TODO: check profile email against token email for security
+    info!(
+        "Searching for {query:?} in {profile:?}...",
+        query = query,
+        profile = profile
+    );
+
+    let query = query.as_object().ok_or(AppError::BadRequest(
+        "invalid search term, use q=<term>".to_string(),
+    ))?;
+    let term = query
+        .get("q")
+        .ok_or(AppError::BadRequest(
+            "missing search term, use q=<term>".to_string(),
+        ))?
+        .as_str()
+        .ok_or(AppError::BadRequest(
+            "invalid search term, use q=<term> where term must be a string".to_string(),
+        ))?;
+    Ok(Json(search(&profile.mail, term).await?))
 }
 
 async fn get_emails(

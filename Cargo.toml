@@ -6,7 +6,7 @@ version = "0.1.0"
 [dependencies]
 anyhow = "1.0.69"
 async-compat = "0.2.1"
-axum = {version = "0.6.10", features = ["macros", "headers"]}
+axum = {version = "0.6.10", features = ["macros", "headers", "query"]}
 axum-error = "0.2.0"
 axum-extra = {version = "0.5", features = ["spa"]}
 base64 = "0.13"

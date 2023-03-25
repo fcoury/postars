@@ -78,8 +78,8 @@ pub struct Email {
     pub web_link: String,
     pub inference_classification: String,
     pub body: Body,
-    pub sender: EmailAddressWrapper,
-    pub from: EmailAddressWrapper,
+    pub sender: Option<EmailAddressWrapper>,
+    pub from: Option<EmailAddressWrapper>,
     pub to_recipients: Vec<EmailAddressWrapper>,
     pub cc_recipients: Vec<EmailAddressWrapper>,
     pub bcc_recipients: Vec<EmailAddressWrapper>,
@@ -402,15 +402,6 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_parsing() {
-        let json = fs::read_to_string("src/fixtures/broken-sender.json").unwrap();
-        let json = serde_json::from_str::<Value>(&json).unwrap();
-        let emails_value = json["value"].as_array();
-        let email: Email = serde_json::from_value(emails_value.unwrap()[0].clone()).unwrap();
-        assert_eq!(email.sender.email_address.name, "Giuliana Reggi");
-    }
-
-    #[test]
     fn test_body() {
         let body = r#"
            {
@@ -423,11 +414,31 @@ mod tests {
     }
 
     #[test]
+    fn test_parsing() {
+        let json = fs::read_to_string("src/fixtures/broken-sender.json").unwrap();
+        let json = serde_json::from_str::<Value>(&json).unwrap();
+        let emails_value = json["value"].as_array();
+        let email: Email = serde_json::from_value(emails_value.unwrap()[0].clone()).unwrap();
+        let sender = email.sender.unwrap();
+        assert_eq!(sender.email_address.name, "Giuliana Reggi");
+    }
+
+    #[test]
     fn test_empty_subject() {
         let json = fs::read_to_string("src/fixtures/empty-subject.json").unwrap();
         let json = serde_json::from_str::<Value>(&json).unwrap();
         let email: Email = serde_json::from_value(json).unwrap();
-        assert_eq!(email.sender.email_address.name, "Sarah McFarlin");
+        let sender = email.sender.unwrap();
+        assert_eq!(sender.email_address.name, "Sarah McFarlin");
         assert_eq!(email.subject, "");
+    }
+
+    #[test]
+    fn test_no_sender_no_from() {
+        let json = fs::read_to_string("src/fixtures/no-sender-no-from.json").unwrap();
+        let json = serde_json::from_str::<Value>(&json).unwrap();
+        let email: Email = serde_json::from_value(json).unwrap();
+        assert!(email.sender.is_none());
+        assert!(email.from.is_none());
     }
 }
