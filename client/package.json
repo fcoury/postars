@@ -16,9 +16,11 @@
     "react-dom": "^18.2.0",
     "react-microsoft-login": "^2.0.1",
     "react-query": "^3.39.3",
+    "react-router-dom": "^6.9.0",
     "string-strip-html": "^13.2.1"
   },
   "devDependencies": {
+    "@babel/cli": "^7.21.0",
     "@babel/core": "^7.21.3",
     "@babel/eslint-parser": "^7.21.3",
     "@babel/preset-react": "^7.18.6",

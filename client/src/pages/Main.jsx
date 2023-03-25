@@ -1,4 +1,6 @@
 import { useEffect } from "react";
+import { Outlet, Route, Routes } from "react-router-dom";
+import ProtectedRoute from "../components/ProtectedRoute";
 import useEmailActions from "../hooks/useEmailActions";
 import { useAppState } from "../state/AppState";
 import Home from "./Home";
@@ -12,7 +14,6 @@ function Main() {
     const id = state.email?.id;
 
     const handleKeyDown = (event) => {
-      console.log("hit", event.key);
       switch (event.key) {
         case "k":
         case "ArrowUp":
@@ -69,7 +70,27 @@ function Main() {
   }, [dispatch]);
 
   return (
-    <div className="container">{state.isLoggedIn ? <Home /> : <Login />}</div>
+    <Routes>
+      <Route element={<Layout />}>
+        <Route
+          path="/"
+          element={
+            <ProtectedRoute isLoggedIn={state.isLoggedIn}>
+              <Home />
+            </ProtectedRoute>
+          }
+        />
+        <Route path="/login" element={<Login />} />
+      </Route>
+    </Routes>
+  );
+}
+
+function Layout() {
+  return (
+    <div className="container">
+      <Outlet />
+    </div>
   );
 }
 
