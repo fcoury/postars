@@ -8,4 +8,4 @@ script = "cargo watch --ignore 'client/*' -x 'run -- --debug serve'"
 run_task = {name = ["dev-ui", "dev-api"], parallel = true}
 
 [tasks.build-client]
-script = "cd client && yarn && yarn build && cd .. && rm -fR public/* && cp -R client/dist/* public && git add public && git commit -m 'chore: update client build'"
+script = "cd ../client && yarn && yarn build && cd ../web && rm -fR public/* && cp -R ../client/dist/* public && git add public && git commit -m 'chore: update client build'"
