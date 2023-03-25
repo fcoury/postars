@@ -1,0 +1,31 @@
+.profile {
+  padding: 2rem;
+}
+
+.profile__title {
+  font-size: 2rem;
+  color: var(--color-text-title);
+  margin-bottom: 1rem;
+}
+
+.profile__info {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.profile__item {
+  font-size: 1rem;
+  color: var(--color-text);
+}
+
+.profile__item strong {
+  display: inline-block;
+  min-width: 150px;
+  font-weight: 600;
+  text-align: right;
+}
+
+.profile__item span {
+  display: inline-block;
+}

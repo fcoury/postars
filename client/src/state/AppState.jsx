@@ -12,6 +12,8 @@ const initialState = {
   currentEmailIndex: null,
   totalEmails: 0,
   emailsLoading: [],
+  profile: null,
+  loadingProfile: false,
 };
 
 function reducer(state, action) {
@@ -117,6 +119,12 @@ function reducerx(state, action) {
 
     case "setCurrentFolder":
       return { ...state, currentFolder: action.payload };
+
+    case "setProfile":
+      return { ...state, profile: action.payload };
+
+    case "setLoadingProfile":
+      return { ...state, loadingProfile: action.payload };
 
     default:
       throw new Error();

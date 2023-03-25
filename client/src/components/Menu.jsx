@@ -1,10 +1,12 @@
+import { useNavigate } from "react-router-dom";
 import { useAppState } from "../state/AppState";
 import styles from "./Menu.module.css";
 
 export default function Menu() {
-  let { dispatch } = useAppState();
+  const { dispatch } = useAppState();
+  const navigate = useNavigate();
 
-  const logout = (event) => {
+  const handleLogout = (event) => {
     event.stopPropagation();
 
     localStorage.removeItem("msalAccount");
@@ -13,15 +15,20 @@ export default function Menu() {
     window.location.reload();
   };
 
+  const handleProfile = (event) => {
+    event.stopPropagation();
+    navigate("/profile");
+  };
+
   return (
     <div className={styles.menu}>
       <ul>
-        <li>
+        <li onClick={handleProfile}>
           <i className="far fa-user-circle"></i>
           Profile
         </li>
         <li className={styles.separator}></li>
-        <li onClick={logout}>
+        <li onClick={handleLogout}>
           <i className="far fa-sign-out"></i>
           Logout
         </li>

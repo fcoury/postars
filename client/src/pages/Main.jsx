@@ -5,6 +5,7 @@ import useEmailActions from "../hooks/useEmailActions";
 import { useAppState } from "../state/AppState";
 import Home from "./Home";
 import Login from "./Login";
+import Profile from "./Profile";
 
 function Main() {
   const { state, dispatch } = useAppState();
@@ -77,6 +78,14 @@ function Main() {
           element={
             <ProtectedRoute isLoggedIn={state.isLoggedIn}>
               <Home />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/profile"
+          element={
+            <ProtectedRoute isLoggedIn={state.isLoggedIn}>
+              <Profile />
             </ProtectedRoute>
           }
         />
