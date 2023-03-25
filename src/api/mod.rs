@@ -10,13 +10,12 @@ use axum::{
 use axum_error::*;
 use axum_extra::routing::SpaRouter;
 use serde::{Deserialize, Serialize};
-use serde_json::json;
 use tower_http::cors::{AllowHeaders, AllowMethods, AllowOrigin, CorsLayer};
 use tower_http::trace::TraceLayer;
 use tracing::info;
 
 use crate::{
-    database::{insert_or_replace_token, Database},
+    database::{Database, User},
     graph::{Email, Folder, GraphClient, Profile},
     token::get_payload_field,
 };
@@ -89,15 +88,16 @@ async fn post_token(
     TypedHeader(access_code): TypedHeader<Authorization<Bearer>>,
     Extension(db): Extension<Database>,
     Json(data): Json<TokenRequest>,
-) -> Result<Json<serde_json::Value>, AppError> {
+) -> Result<Json<User>, AppError> {
     let access_token = access_code.token().to_owned();
-    let user = get_payload_field(&access_token, "unique_name")?;
+    let email = get_payload_field(&access_token, "unique_name")?;
     let client = db.get().await?;
 
     // TODO: do we need expiration time?
-    insert_or_replace_token(&client, &user, &access_token, &data.refresh_token).await?;
+    let user =
+        User::upsert_with_tokens(&client, &email, &access_token, &data.refresh_token).await?;
 
-    Ok(Json(json!({"ok": true})))
+    Ok(Json(user))
 }
 
 async fn get_emails(

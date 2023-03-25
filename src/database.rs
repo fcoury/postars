@@ -1,4 +1,5 @@
 use deadpool_postgres::{Config, CreatePoolError, Pool, PoolError, Runtime};
+use serde::{Deserialize, Serialize};
 use thiserror::Error;
 use tokio_postgres::NoTls;
 use url::Url;
@@ -62,6 +63,69 @@ impl Database {
     }
 }
 
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct User {
+    pub id: Option<i32>,
+    pub email: String,
+    pub access_token: Option<String>,
+    pub refresh_token: Option<String>,
+}
+
+impl User {
+    pub async fn find(client: &deadpool_postgres::Client, email: &str) -> Result<Option<Self>> {
+        let stmt = client
+            .prepare("SELECT id, email, access_token, refresh_token FROM users WHERE email = $1")
+            .await?;
+        let rows = client.query(&stmt, &[&email]).await?;
+        Ok(rows.first().map(|row| Self {
+            id: Some(row.get(0)),
+            email: row.get(1),
+            access_token: row.get(2),
+            refresh_token: row.get(3),
+        }))
+    }
+
+    pub async fn upsert_with_tokens(
+        client: &deadpool_postgres::Client,
+        email: &str,
+        access_token: &str,
+        refresh_token: &str,
+    ) -> Result<Self> {
+        let stmt = client
+            .prepare(
+                "INSERT INTO users (email, access_token, refresh_token) VALUES ($1, $2, $3)
+                ON CONFLICT (email) DO UPDATE SET access_token = $2, refresh_token = $3
+                RETURNING id, email, access_token, refresh_token",
+            )
+            .await?;
+        let rows = client
+            .query(&stmt, &[&email, &access_token, &refresh_token])
+            .await?;
+        Ok(Self {
+            id: Some(rows.first().unwrap().get(0)),
+            email: rows.first().unwrap().get(1),
+            access_token: rows.first().unwrap().get(2),
+            refresh_token: rows.first().unwrap().get(3),
+        })
+    }
+
+    #[allow(unused)]
+    pub async fn update_tokens(
+        &self,
+        client: &deadpool_postgres::Client,
+        access_token: &str,
+        refresh_token: &str,
+    ) -> Result<()> {
+        let stmt = client
+            .prepare("UPDATE users SET access_token = $1, refresh_token = $2 WHERE email = $3")
+            .await?;
+        client
+            .execute(&stmt, &[&access_token, &refresh_token, &self.email])
+            .await?;
+        Ok(())
+    }
+}
+
 /// Creates a Deadpool configuration from a database URL.
 fn create_deadpool_config_from_url(url: &str) -> std::result::Result<Config, url::ParseError> {
     let parsed_url = Url::parse(url)?;
@@ -86,52 +150,4 @@ fn create_deadpool_config_from_url(url: &str) -> std::result::Result<Config, url
     // }
 
     Ok(config)
-}
-
-pub async fn get_or_create_user(client: &deadpool_postgres::Client, email: &str) -> Result<i32> {
-    let stmt = client
-        .prepare("SELECT id, email FROM users WHERE email = $1")
-        .await?;
-    let rows = client.query(&stmt, &[&email]).await?;
-
-    if let Some(row) = rows.first() {
-        Ok(row.get(0))
-    } else {
-        let stmt = client
-            .prepare("INSERT INTO users (email) VALUES ($1) RETURNING id, email")
-            .await?;
-        let rows = client.query(&stmt, &[&email]).await?;
-        Ok(rows[0].get(0))
-    }
-}
-
-pub async fn insert_or_replace_token(
-    client: &deadpool_postgres::Client,
-    user_email: &str,
-    access_token: &str,
-    refresh_token: &str,
-) -> Result<()> {
-    let user_id = get_or_create_user(client, user_email).await?;
-
-    let stmt = client
-        .prepare("SELECT id FROM tokens WHERE user_id = $1")
-        .await?;
-    let rows = client.query(&stmt, &[&user_id]).await?;
-
-    let stmt = if rows.first().is_some() {
-        client
-                .prepare("UPDATE tokens SET access_token = $2, refresh_token = $3, updated_at = NOW() WHERE id = $1")
-                .await?
-    } else {
-        client
-            .prepare(
-                "INSERT INTO tokens (user_id, access_token, refresh_token) VALUES ($1, $2, $3)",
-            )
-            .await?
-    };
-
-    client
-        .execute(&stmt, &[&user_id, &access_token, &refresh_token])
-        .await?;
-    Ok(())
 }

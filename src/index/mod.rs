@@ -1,4 +1,4 @@
-use std::{fs, sync::Mutex};
+use std::sync::Mutex;
 
 use base64::{encode_config, URL_SAFE_NO_PAD};
 use meilisearch_sdk::Client;
@@ -7,6 +7,11 @@ use serde_json::Value;
 use sha2::{Digest, Sha256};
 use tokio::task::spawn_blocking;
 use tracing::info;
+
+use crate::{
+    database::{Database, User},
+    graph::GraphClient,
+};
 
 pub async fn full_index_handler_sync(task_id: i32, task_data: TaskData) -> Result<(), TaskError> {
     let fut = Mutex::new(Box::pin(full_index_handler(task_id, task_data)));
@@ -27,30 +32,39 @@ fn generate_deterministic_key(id: &str) -> String {
 
 pub async fn full_index_handler(_task_id: i32, task_data: TaskData) -> Result<(), TaskError> {
     info!("Full index handler called: {task_data:#?}");
-    let user_id = task_data.get("user_id").unwrap().as_str().unwrap();
-    let file = task_data.get("file").unwrap().as_str().unwrap();
+    let user_email = task_data.get("user_email").unwrap().as_str().unwrap();
+
+    let database_url = std::env::var("DATABASE_URL").unwrap();
+    let database = Database::new(database_url).await.unwrap();
+    let client = database.get().await.unwrap();
+    let user = User::find(&client, user_email).await.unwrap().unwrap();
+
+    let Some(token) = user.access_token else {
+        return Err(TaskError::Custom("No access token".to_string()));
+    };
 
     let client = Client::new("http://localhost:7700", "masterKey");
+    let graph = GraphClient::new(token);
+    let emails = graph.get_user_emails().await.unwrap();
+    let documents = emails
+        .into_iter()
+        .map(|email| {
+            let mut json = serde_json::to_value(email).unwrap();
+            let id = json["id"].as_str().unwrap();
+            let unique_id = generate_deterministic_key(id);
+            json.as_object_mut()
+                .unwrap()
+                .insert("uniqueId".to_string(), Value::String(unique_id));
+            json
+        })
+        .collect::<Vec<Value>>();
 
-    let json = fs::read_to_string(file).unwrap();
-    let mut json: Value = serde_json::from_str(&json).unwrap();
-    let json_array = json["value"].as_array_mut().unwrap();
-
-    for entry in json_array.iter_mut() {
-        let id = entry["id"].as_str().unwrap();
-        let unique_id = generate_deterministic_key(id);
-        entry
-            .as_object_mut()
-            .unwrap()
-            .insert("uniqueId".to_string(), Value::String(unique_id));
-    }
-
-    info!("Indexing {} emails", json_array.len());
+    info!("Indexing {} emails", documents.len());
 
     // Add emails to Meilisearch
     let result = client
-        .index(user_id)
-        .add_documents(json_array, Some("uniqueId"))
+        .index(format!("emails_{}", user.id.unwrap()))
+        .add_documents(&documents, Some("uniqueId"))
         .await
         .unwrap();
     info!("Meilisearch result: {:#?}", result);

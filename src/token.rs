@@ -11,5 +11,5 @@ pub fn get_payload(token: &str) -> Result<serde_json::Value> {
 pub fn get_payload_field(token: &str, field: &str) -> Result<String> {
     let value = get_payload(token)?;
     let field = value.get(field).ok_or(anyhow!("invalid token"))?;
-    Ok(field.to_string())
+    Ok(field.as_str().unwrap().to_string())
 }

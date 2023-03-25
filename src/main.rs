@@ -51,7 +51,6 @@ enum Command {
         database_url: String,
 
         task_name: String,
-
         task_data: Option<String>,
     },
 }
