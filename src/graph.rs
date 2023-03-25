@@ -145,28 +145,17 @@ impl GraphClient {
 
     pub async fn get_user_emails(&self) -> Result<Vec<Email>, GraphClientError> {
         let url = format!("{}/me/messages", GRAPH_API_BASE_URL);
-        let response = self
-            .client
-            .get(&url)
-            .bearer_auth(&self.access_token)
-            .send()
-            .await?;
+        self.fetch_all_items::<Email>(&url).await
+    }
 
-        if response.status().is_success() {
-            let json: Value = response.json().await?;
-            let emails_value = json["value"]
-                .as_array()
-                .ok_or_else(|| GraphClientError::Parse("emails", json.clone()))?;
-
-            let emails: Result<Vec<Email>, serde_json::Error> = emails_value
-                .iter()
-                .map(|email_value| serde_json::from_value(email_value.clone()))
-                .collect();
-
-            Ok(emails?)
-        } else {
-            Err(GraphClientError::Request(response.status()))
-        }
+    pub async fn get_user_emails_paginated(
+        &self,
+        initial_page: usize,
+        num_pages: usize,
+    ) -> Result<(Vec<Email>, bool), GraphClientError> {
+        let url = format!("{}/me/messages", GRAPH_API_BASE_URL);
+        self.fetch_pages::<Email>(&url, initial_page, num_pages)
+            .await
     }
 
     pub async fn get_user_emails_from_folder(
@@ -330,6 +319,57 @@ impl GraphClient {
         }
 
         Ok(items)
+    }
+
+    async fn fetch_pages<T: DeserializeOwned>(
+        &self,
+        base_url: &str,
+        initial_page: usize,
+        num_pages: usize,
+    ) -> Result<(Vec<T>, bool), GraphClientError> {
+        let mut items = Vec::new();
+        let mut next_link: Option<String> =
+            Some(format!("{}?$skip={}", base_url, initial_page * num_pages));
+        let mut pages_fetched = 0;
+        let mut has_more_pages = false;
+
+        while let Some(url) = next_link {
+            if pages_fetched >= num_pages {
+                has_more_pages = true;
+                break;
+            }
+
+            let response = self
+                .client
+                .get(&url)
+                .bearer_auth(&self.access_token)
+                .send()
+                .await?;
+
+            if response.status().is_success() {
+                let json: Value = response.json().await?;
+                let item_values = json["value"]
+                    .as_array()
+                    .ok_or_else(|| GraphClientError::Parse("items", json.clone()))?;
+
+                let deserialized_items: Vec<T> = item_values
+                    .iter()
+                    .map(|item_value| serde_json::from_value(item_value.clone()))
+                    .collect::<Result<Vec<T>, _>>()?;
+
+                items.extend(deserialized_items);
+
+                next_link = json["@odata.nextLink"]
+                    .as_str()
+                    .map(|link| link.to_string());
+
+                pages_fetched += 1;
+            } else {
+                return Err(GraphClientError::Request(response.status()));
+            }
+        }
+
+        Ok((items, has_more_pages))
     }
 
     async fn get_folder_id_by_name(

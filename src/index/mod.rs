@@ -33,6 +33,15 @@ fn generate_deterministic_key(id: &str) -> String {
 pub async fn full_index_handler(_task_id: i32, task_data: TaskData) -> Result<(), TaskError> {
     info!("Full index handler called: {task_data:#?}");
     let user_email = task_data.get("user_email").unwrap().as_str().unwrap();
+    let has_pagination = task_data.get("num_pages").is_some();
+    let start_page = match task_data.get("start_page") {
+        Some(page) => page.as_i64().unwrap(),
+        None => 0,
+    };
+    let num_pages = match task_data.get("num_pages") {
+        Some(page) => page.as_i64().unwrap(),
+        None => 0,
+    };
 
     let database_url = std::env::var("DATABASE_URL").unwrap();
     let database = Database::new(database_url).await.unwrap();
@@ -45,7 +54,16 @@ pub async fn full_index_handler(_task_id: i32, task_data: TaskData) -> Result<()
 
     let client = Client::new("http://localhost:7700", "masterKey");
     let graph = GraphClient::new(token);
-    let emails = graph.get_user_emails().await.unwrap();
+
+    let (emails, has_more) = if has_pagination {
+        graph
+            .get_user_emails_paginated(start_page as usize, num_pages as usize)
+            .await
+            .unwrap()
+    } else {
+        (graph.get_user_emails().await.unwrap(), false)
+    };
+
     let documents = emails
         .into_iter()
         .map(|email| {
@@ -59,7 +77,11 @@ pub async fn full_index_handler(_task_id: i32, task_data: TaskData) -> Result<()
         })
         .collect::<Vec<Value>>();
 
-    info!("Indexing {} emails", documents.len());
+    info!(
+        "Indexing {} emails. Has more? {}",
+        documents.len(),
+        has_more
+    );
 
     // Add emails to Meilisearch
     let result = client
