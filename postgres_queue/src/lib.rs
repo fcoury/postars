@@ -83,6 +83,9 @@ pub enum TaskError {
 
     #[error("URL parsing error: {0}")]
     UrlError(#[from] url::ParseError),
+
+    #[error("Task panicked: {0}")]
+    Custom(String),
 }
 
 /// An enumeration of possible errors that can occur while connecting to the database.
