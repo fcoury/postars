@@ -246,6 +246,21 @@ pub async fn initialize_database(pool: &Pool) -> Result<(), TaskError> {
                 created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
                 updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
             );
+
+            CREATE OR REPLACE FUNCTION update_task_queue_modified_at ()
+            RETURNS TRIGGER
+            AS $$
+            BEGIN
+            NEW.updated_at = NOW();
+            RETURN NEW;
+            END;
+            $$
+            LANGUAGE plpgsql;
+
+            CREATE OR REPLACE TRIGGER task_queue_modified_at_trigger
+            BEFORE UPDATE ON task_queue
+            FOR EACH ROW
+            EXECUTE FUNCTION update_task_queue_modified_at ();
             "#,
         )
         .await?;
