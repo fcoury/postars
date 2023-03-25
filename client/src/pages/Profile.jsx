@@ -1,6 +1,7 @@
 import React from "react";
 import Loading from "../components/Loading";
 import Sidebar from "../components/Sidebar";
+import ToggleSwitch from "../components/ToggleSwitch";
 import useProfile from "../hooks/useProfile";
 import styles from "./Profile.module.css";
 
@@ -10,6 +11,10 @@ const Profile = () => {
   if (isLoading || !profile) {
     return <Loading />;
   }
+
+  const handleEnable = (enabled) => {
+    console.log(`Background Indexing ${enabled ? "on" : "off"}`);
+  };
 
   return (
     <>
@@ -30,6 +35,10 @@ const Profile = () => {
             <strong>Preferred Language:</strong>{" "}
             <span>{profile.preferredLanguage}</span>
           </div>
+        </div>
+        <div className={styles.profile__actions}>
+          <label htmlFor="backgroundIndexing">Background Indexing</label>
+          <ToggleSwitch id="backgroundIndexing" onChange={handleEnable} />
         </div>
       </div>
     </>
