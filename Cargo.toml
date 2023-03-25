@@ -17,6 +17,7 @@ eyre = "0.6.8"
 fehler = "1.0.0"
 oauth2 = "4.3.0"
 opener = "0.5.2"
+postgres_queue = {path = "../postgres_queue"}
 reqwest = {version = "0.11.15", features = ["json"]}
 serde = {version = "1.0.155", features = ["derive"]}
 serde_json = {version = "1.0.94", features = ["preserve_order"]}

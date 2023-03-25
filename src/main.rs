@@ -7,6 +7,7 @@ use std::net::SocketAddr;
 use api::Server;
 use clap::{Parser, Subcommand};
 use dotenvy::dotenv;
+use tracing::info;
 use tracing_subscriber::{EnvFilter, FmtSubscriber};
 
 use crate::auth::Token;
@@ -30,6 +31,10 @@ enum Command {
     Auth {
         #[command(subcommand)]
         command: AuthCommand,
+    },
+    Workers {
+        #[arg(short, long, default_value = "10")]
+        num_workers: usize,
     },
 }
 
@@ -57,6 +62,10 @@ async fn main() -> anyhow::Result<()> {
                 Ok(())
             }
         },
+        Command::Workers { num_workers } => {
+            info!("Starting {} workers", num_workers);
+            Ok(())
+        }
     }
 }
 
