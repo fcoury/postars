@@ -16,8 +16,9 @@ use tower_http::trace::TraceLayer;
 use tracing::info;
 
 use crate::{
-    database::Database,
+    database::{insert_or_replace_token, Database},
     graph::{Email, Folder, GraphClient, Profile},
+    token::get_payload_field,
 };
 
 use self::error::AppError;
@@ -90,14 +91,12 @@ async fn post_token(
     Json(data): Json<TokenRequest>,
 ) -> Result<Json<serde_json::Value>, AppError> {
     let access_token = access_code.token().to_owned();
-    db.get()
-        .await?
-        .execute(
-            "INSERT INTO tokens (access_token, refresh_token) VALUES ($1, $2)",
-            &[&access_token, &data.refresh_token],
-        )
-        .await?;
-    println!("Data: {:?}", data);
+    let user = get_payload_field(&access_token, "unique_name")?;
+    let client = db.get().await?;
+
+    // TODO: do we need expiration time?
+    insert_or_replace_token(&client, &user, &access_token, &data.refresh_token).await?;
+
     Ok(Json(json!({"ok": true})))
 }
 

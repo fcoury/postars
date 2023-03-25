@@ -2,11 +2,12 @@ use axum::body::BoxBody;
 use axum::response::{IntoResponse, Response};
 use reqwest::StatusCode;
 
+use crate::database::DatabaseError;
 use crate::graph::GraphClientError;
 
 pub enum AppError {
     GraphClient(GraphClientError),
-    Database(tokio_postgres::Error),
+    Database(DatabaseError),
     Other(anyhow::Error),
 }
 
@@ -16,8 +17,8 @@ impl From<GraphClientError> for AppError {
     }
 }
 
-impl From<tokio_postgres::Error> for AppError {
-    fn from(inner: tokio_postgres::Error) -> Self {
+impl From<DatabaseError> for AppError {
+    fn from(inner: DatabaseError) -> Self {
         AppError::Database(inner)
     }
 }

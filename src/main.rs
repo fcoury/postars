@@ -3,6 +3,7 @@ mod auth;
 mod database;
 mod graph;
 mod index;
+mod token;
 
 use std::net::SocketAddr;
 
