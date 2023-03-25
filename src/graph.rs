@@ -4,7 +4,6 @@ use reqwest::Client;
 use serde::{de::DeserializeOwned, Deserialize, Deserializer, Serialize};
 use serde_json::{json, Value};
 use thiserror::Error;
-use tracing::info;
 
 const GRAPH_API_BASE_URL: &str = "https://graph.microsoft.com/v1.0";
 
@@ -187,7 +186,6 @@ impl GraphClient {
 
         if response.status().is_success() {
             let json: Value = response.json().await?;
-            info!("json: {}", serde_json::to_string_pretty(&json)?);
             let emails_value = json["value"]
                 .as_array()
                 .ok_or_else(|| GraphClientError::Parse("emails", json.clone()))?;
