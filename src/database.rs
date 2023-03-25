@@ -1,16 +1,39 @@
 use deadpool_postgres::{Config, Pool, Runtime};
+use tokio_postgres::NoTls;
 use url::Url;
 
 #[derive(Clone)]
 pub struct Database {
+    database_url: String,
     pool: Pool,
+}
+
+mod embedded {
+    use refinery::embed_migrations;
+    embed_migrations!("./migrations");
 }
 
 impl Database {
     pub async fn new(database_url: String) -> anyhow::Result<Self> {
         let config = create_deadpool_config_from_url(&database_url)?;
         let pool = config.create_pool(Some(Runtime::Tokio1), tokio_postgres::NoTls)?;
-        Ok(Self { pool })
+        Ok(Self { database_url, pool })
+    }
+
+    pub async fn migrate(&self) -> anyhow::Result<()> {
+        let (mut client, connection) = tokio_postgres::connect(&self.database_url, NoTls).await?;
+
+        // Spawn a new tokio task to run the connection in the background.
+        tokio::spawn(async move {
+            if let Err(e) = connection.await {
+                eprintln!("connection error: {}", e);
+            }
+        });
+
+        embedded::migrations::runner()
+            .run_async(&mut client)
+            .await?;
+        Ok(())
     }
 
     pub async fn get(&self) -> anyhow::Result<deadpool_postgres::Client> {

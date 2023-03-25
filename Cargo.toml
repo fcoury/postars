@@ -14,7 +14,7 @@ bitflags = {version = "2.0.0", features = ["serde"]}
 chrono = {version = "0.4.24", features = ["serde"]}
 clap = {version = "4.1.8", features = ["derive", "env"]}
 confy = "0.5.1"
-deadpool-postgres = { version = "0.10.5", features = ["serde"] }
+deadpool-postgres = {version = "0.10.5", features = ["serde"]}
 dotenvy = "0.15.6"
 eyre = "0.6.8"
 fehler = "1.0.0"
@@ -23,6 +23,7 @@ meilisearch-sdk = "0.22.1"
 oauth2 = "4.3.0"
 opener = "0.5.2"
 postgres_queue = {path = "postgres_queue"}
+refinery = {version = "0.8", features = ["tokio-postgres"]}
 reqwest = {version = "0.11.15", features = ["json"]}
 serde = {version = "1.0.155", features = ["derive"]}
 serde_json = {version = "1.0.94", features = ["preserve_order"]}

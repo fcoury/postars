@@ -43,6 +43,9 @@ impl Server {
         info!("Connecting to database...");
         let db = Database::new(self.database_url.clone()).await?;
 
+        info!("Running migrations...");
+        db.migrate().await?;
+
         info!("Listening on {}", self.addr);
         Ok(axum::Server::bind(&self.addr)
             .serve(self.routes(db).into_make_service())
