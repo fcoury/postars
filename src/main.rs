@@ -1,5 +1,6 @@
 mod api;
 mod auth;
+mod database;
 mod graph;
 mod index;
 
@@ -29,6 +30,9 @@ enum Command {
         /// The address to bind to
         #[arg(short, long, default_value = "127.0.0.1:3001")]
         bind: SocketAddr,
+
+        #[arg(short, long, env = "DATABASE_URL")]
+        database_url: String,
     },
     Auth {
         #[command(subcommand)]
@@ -65,7 +69,7 @@ async fn main() -> anyhow::Result<()> {
     setup_logging(&cli)?;
 
     match cli.command {
-        Command::Serve { bind } => Ok(serve(bind).await?),
+        Command::Serve { bind, database_url } => Ok(serve(bind, database_url).await?),
         Command::Auth { command } => match command {
             AuthCommand::Set => auth().await,
             AuthCommand::Get => {
@@ -153,8 +157,8 @@ fn setup_logging(cli: &Cli) -> anyhow::Result<()> {
     Ok(())
 }
 
-async fn serve(bind: SocketAddr) -> anyhow::Result<()> {
-    Server::new(bind).start().await
+async fn serve(bind: SocketAddr, database_url: String) -> anyhow::Result<()> {
+    Server::new(bind, database_url).start().await
 }
 
 async fn auth() -> anyhow::Result<()> {

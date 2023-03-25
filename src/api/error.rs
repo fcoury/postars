@@ -6,12 +6,19 @@ use crate::graph::GraphClientError;
 
 pub enum AppError {
     GraphClient(GraphClientError),
+    Database(tokio_postgres::Error),
     Other(anyhow::Error),
 }
 
 impl From<GraphClientError> for AppError {
     fn from(inner: GraphClientError) -> Self {
         AppError::GraphClient(inner)
+    }
+}
+
+impl From<tokio_postgres::Error> for AppError {
+    fn from(inner: tokio_postgres::Error) -> Self {
+        AppError::Database(inner)
     }
 }
 
@@ -58,6 +65,10 @@ impl IntoResponse for AppError {
                     _ => "An error occurred while processing the request".to_string(),
                 };
                 (status, message)
+            }
+            AppError::Database(err) => {
+                let message = err.to_string();
+                (StatusCode::INTERNAL_SERVER_ERROR, message)
             }
             AppError::GraphClient(err) => {
                 let message = err.to_string();

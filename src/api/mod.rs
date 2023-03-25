@@ -1,42 +1,58 @@
 use std::net::SocketAddr;
 
 use axum::{
+    debug_handler,
     extract::Path,
     headers::{authorization::Bearer, Authorization},
-    routing::{get, put},
-    Json, Router, TypedHeader,
+    routing::{get, post, put},
+    Extension, Json, Router, TypedHeader,
 };
 use axum_error::*;
 use axum_extra::routing::SpaRouter;
+use serde::{Deserialize, Serialize};
+use serde_json::json;
 use tower_http::cors::{AllowHeaders, AllowMethods, AllowOrigin, CorsLayer};
 use tower_http::trace::TraceLayer;
 use tracing::info;
 
-use crate::graph::{Email, Folder, GraphClient, Profile};
+use crate::{
+    database::Database,
+    graph::{Email, Folder, GraphClient, Profile},
+};
 
 use self::error::AppError;
 
 mod error;
 
+#[derive(Debug, Serialize, Deserialize)]
+struct TokenRequest {
+    refresh_token: String,
+}
+
 pub struct Server {
     addr: SocketAddr,
+    database_url: String,
 }
 
 impl Server {
-    pub fn new(addr: SocketAddr) -> Self {
-        Self { addr }
+    pub fn new(addr: SocketAddr, database_url: String) -> Self {
+        Self { addr, database_url }
     }
 
     pub async fn start(&self) -> anyhow::Result<()> {
+        info!("Connecting to database...");
+        let db = Database::new(self.database_url.clone()).await?;
+
         info!("Listening on {}", self.addr);
         Ok(axum::Server::bind(&self.addr)
-            .serve(self.routes().into_make_service())
+            .serve(self.routes(db).into_make_service())
             .await?)
     }
 
-    pub fn routes(&self) -> Router {
+    pub fn routes(&self, db: Database) -> Router {
         Router::new()
             .route("/api/me", get(get_profile))
+            .route("/api/token", post(post_token))
             .route("/api/emails", get(get_emails))
             .route("/api/emails/move/:folder", put(put_bulk_move))
             .route("/api/emails/:id", get(get_email))
@@ -46,6 +62,7 @@ impl Server {
             .route("/api/folders", get(get_folders))
             .route("/api/:folder/emails", get(get_folder_emails))
             .merge(SpaRouter::new("/", "public").index_file("index.html"))
+            .layer(Extension(db))
             .layer(
                 CorsLayer::new()
                     .allow_origin(AllowOrigin::any())
@@ -61,6 +78,24 @@ async fn get_profile(
 ) -> Result<Json<Profile>, AppError> {
     let client = GraphClient::new(access_code.token().to_owned());
     Ok(Json(client.get_user_profile().await?))
+}
+
+#[debug_handler]
+async fn post_token(
+    TypedHeader(access_code): TypedHeader<Authorization<Bearer>>,
+    Extension(db): Extension<Database>,
+    Json(data): Json<TokenRequest>,
+) -> Result<Json<serde_json::Value>, AppError> {
+    let access_token = access_code.token().to_owned();
+    db.get()
+        .await?
+        .execute(
+            "INSERT INTO tokens (access_token, refresh_token) VALUES ($1, $2)",
+            &[&access_token, &data.refresh_token],
+        )
+        .await?;
+    println!("Data: {:?}", data);
+    Ok(Json(json!({"ok": true})))
 }
 
 async fn get_emails(
