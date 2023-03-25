@@ -1,12 +1,14 @@
 mod api;
 mod auth;
 mod graph;
+mod index;
 
 use std::net::SocketAddr;
 
 use api::Server;
 use clap::{Parser, Subcommand};
 use dotenvy::dotenv;
+use postgres_queue::{initialize_database, TaskRegistry};
 use tracing::info;
 use tracing_subscriber::{EnvFilter, FmtSubscriber};
 
@@ -35,6 +37,17 @@ enum Command {
     Workers {
         #[arg(short, long, default_value = "10")]
         num_workers: usize,
+
+        #[arg(short, long, env = "DATABASE_URL")]
+        database_url: String,
+    },
+    Enqueue {
+        #[arg(short, long, env = "DATABASE_URL")]
+        database_url: String,
+
+        task_name: String,
+
+        task_data: Option<String>,
     },
 }
 
@@ -62,8 +75,63 @@ async fn main() -> anyhow::Result<()> {
                 Ok(())
             }
         },
-        Command::Workers { num_workers } => {
-            info!("Starting {} workers", num_workers);
+        Command::Workers {
+            num_workers,
+            database_url,
+        } => {
+            info!("Starting {} workers...", num_workers);
+
+            let pool = postgres_queue::connect(&database_url)
+                .await
+                .expect("Failed to connect to the database");
+
+            initialize_database(&pool)
+                .await
+                .expect("Failed to initialize database");
+
+            let mut registry = TaskRegistry::new();
+            registry.register_task("full_index".to_string(), index::full_index_handler_sync);
+
+            let tasks = registry
+                .run(&pool, num_workers)
+                .await
+                .expect("Failed to run tasks");
+
+            info!("Running {} tasks", tasks.len());
+
+            // Wait for all tasks to complete
+            for task in tasks {
+                task.await.expect("Task failed");
+            }
+
+            Ok(())
+        }
+        Command::Enqueue {
+            database_url,
+            task_name,
+            task_data,
+        } => {
+            let pool = postgres_queue::connect(&database_url)
+                .await
+                .expect("Failed to connect to the database");
+
+            initialize_database(&pool)
+                .await
+                .expect("Failed to initialize database");
+
+            let task_data = serde_json::from_str(&task_data.unwrap_or_else(|| "{}".to_string()))?;
+
+            let task_id = postgres_queue::enqueue(
+                &pool.get().await.unwrap(),
+                &task_name,
+                task_data,
+                chrono::Utc::now(), // Run the task immediately
+                None,               // No interval
+            )
+            .await
+            .expect("Failed to enqueue task");
+            println!("Enqueued task with ID: {}", task_id);
+
             Ok(())
         }
     }
