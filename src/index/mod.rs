@@ -52,10 +52,10 @@ pub async fn full_index_handler(_task_id: i32, task_data: TaskData) -> Result<()
         return Err(TaskError::Custom("No access token".to_string()));
     };
 
-    let client = Client::new(
-        env::var("SEARCH_ENDPOINT").expect("missing SEARCH_ENDPOINT"),
-        env::var("SEARCH_MASTER_KEY").expect("missing SEARCH_MASTER_KEY"),
-    );
+    let endpoint = env::var("SEARCH_ENDPOINT").expect("missing SEARCH_ENDPOINT");
+    let master_key = env::var("SEARCH_MASTER_KEY").expect("missing SEARCH_MASTER_KEY");
+    info!("Connecting to Meilisearch at {}", endpoint);
+    let client = Client::new(endpoint, master_key);
     let graph = GraphClient::new(token);
 
     let (emails, has_more) = if has_pagination {

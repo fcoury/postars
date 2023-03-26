@@ -107,7 +107,6 @@ async fn get_search(
     Query(query): Query<serde_json::Value>,
 ) -> Result<Json<Vec<Email>>, AppError> {
     let access_token = access_code.token().to_owned();
-    info!("access_token: {}", access_token);
     let email = get_payload_field(&access_token, "unique_name")?;
     info!("email: {}", email);
 
