@@ -1,4 +1,4 @@
-use std::sync::Mutex;
+use std::{env, sync::Mutex};
 
 use base64::{encode_config, URL_SAFE_NO_PAD};
 use meilisearch_sdk::Client;
@@ -52,7 +52,10 @@ pub async fn full_index_handler(_task_id: i32, task_data: TaskData) -> Result<()
         return Err(TaskError::Custom("No access token".to_string()));
     };
 
-    let client = Client::new("http://localhost:7700", "masterKey");
+    let client = Client::new(
+        env::var("SEARCH_ENDPOINT").expect("missing SEARCH_ENDPOINT"),
+        env::var("SEARCH_MASTER_KEY").expect("missing SEARCH_MASTER_KEY"),
+    );
     let graph = GraphClient::new(token);
 
     let (emails, has_more) = if has_pagination {
