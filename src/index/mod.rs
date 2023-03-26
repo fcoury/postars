@@ -124,7 +124,10 @@ pub async fn search(user_email: &str, term: &str) -> anyhow::Result<Vec<Email>> 
     let client = database.get().await.unwrap();
     let user = User::find(&client, user_email).await.unwrap().unwrap();
 
-    let client = Client::new("http://localhost:7700", "masterKey");
+    let endpoint = env::var("SEARCH_ENDPOINT").expect("missing SEARCH_ENDPOINT");
+    let master_key = env::var("SEARCH_MASTER_KEY").expect("missing SEARCH_MASTER_KEY");
+    info!("Connecting to Meilisearch at {}", endpoint);
+    let client = Client::new(endpoint, master_key);
     let results = client
         .index(format!("emails_{}", user.id.unwrap()))
         .search()
