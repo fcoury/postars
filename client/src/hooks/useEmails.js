@@ -12,9 +12,10 @@ const useEmails = () => {
     isLoading,
     error,
   } = useQuery(
-    ["emails", state.currentFolder],
+    ["emails", state.currentFolder, state.searching],
     () => fetchData(`/${state.currentFolder}/emails`),
     {
+      enabled: !state.searching,
       onFetching: () => {
         dispatch({ type: "setLoadingEmails", payload: true });
       },

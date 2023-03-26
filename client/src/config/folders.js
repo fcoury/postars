@@ -4,6 +4,7 @@ const FOLDERS = [
   { icon: "far fa-exclamation-square", folder: "Junk Email", label: "Spam" },
   { icon: "far fa-mail-bulk", folder: "All Mail", label: "All Mail" },
   { icon: "far fa-trash-alt", folder: "Deleted Items", label: "Trash" },
+  { icon: "far fa-search", folder: "Search", label: "Search", hidden: true },
 ];
 
 export const getLabel = (folder) => {

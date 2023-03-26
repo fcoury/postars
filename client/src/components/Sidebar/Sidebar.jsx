@@ -58,6 +58,7 @@ export default function Sidebar() {
   };
 
   const isFolderOpen = (folder) => {
+    if (state.searching) return false;
     const currentFolder = state.currentFolder;
     return currentFolder === folder;
   };

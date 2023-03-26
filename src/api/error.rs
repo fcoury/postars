@@ -1,6 +1,7 @@
 use axum::body::BoxBody;
 use axum::response::{IntoResponse, Response};
 use reqwest::StatusCode;
+use tracing::error;
 
 use crate::database::DatabaseError;
 use crate::graph::GraphClientError;
@@ -59,7 +60,7 @@ impl IntoResponse for AppError {
     fn into_response(self) -> Response {
         let (status, message) = match self {
             AppError::GraphClient(GraphClientError::Request(status)) => {
-                println!("Request error: {}", status);
+                error!("Request error: {}", status);
                 let message = match status {
                     StatusCode::UNAUTHORIZED => "Unauthorized".to_string(),
                     StatusCode::FORBIDDEN => "Forbidden".to_string(),
@@ -70,13 +71,16 @@ impl IntoResponse for AppError {
             }
             AppError::Database(err) => {
                 let message = err.to_string();
+                error!("Database error: {:?}", err);
                 (StatusCode::INTERNAL_SERVER_ERROR, message)
             }
             AppError::GraphClient(err) => {
                 let message = err.to_string();
+                error!("GraphClient error: {:?}", err);
                 (StatusCode::INTERNAL_SERVER_ERROR, message)
             }
             AppError::Other(err) => {
+                error!("Unknown error: {:?}", err);
                 let message = err.to_string();
                 (StatusCode::INTERNAL_SERVER_ERROR, message)
             }

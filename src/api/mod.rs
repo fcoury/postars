@@ -106,19 +106,18 @@ async fn get_search(
     TypedHeader(access_code): TypedHeader<Authorization<Bearer>>,
     Query(query): Query<serde_json::Value>,
 ) -> Result<Json<Vec<Email>>, AppError> {
-    let client = GraphClient::new(access_code.token().to_owned());
-    let profile = client.get_user_profile().await?;
+    let access_token = access_code.token().to_owned();
+    info!("access_token: {}", access_token);
+    let email = get_payload_field(&access_token, "unique_name")?;
+    info!("email: {}", email);
 
     // TODO: check profile email against token email for security
-    info!(
-        "Searching for {query:?} in {profile:?}...",
-        query = query,
-        profile = profile
-    );
+    info!("Searching for {query:?}...");
 
     let query = query.as_object().ok_or(AppError::BadRequest(
         "invalid search term, use q=<term>".to_string(),
     ))?;
+    info!("Before search");
     let term = query
         .get("q")
         .ok_or(AppError::BadRequest(
@@ -128,7 +127,7 @@ async fn get_search(
         .ok_or(AppError::BadRequest(
             "invalid search term, use q=<term> where term must be a string".to_string(),
         ))?;
-    Ok(Json(search(&profile.mail, term).await?))
+    Ok(Json(search(&email, term).await?))
 }
 
 async fn get_emails(

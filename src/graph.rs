@@ -113,7 +113,7 @@ pub struct EmailAddressWrapper {
 #[serde(rename_all = "camelCase")]
 pub struct EmailAddress {
     pub name: String,
-    pub address: String,
+    pub address: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -427,6 +427,23 @@ mod tests {
     fn test_empty_subject() {
         let json = fs::read_to_string("src/fixtures/empty-subject.json").unwrap();
         let json = serde_json::from_str::<Value>(&json).unwrap();
+        let email: Email = serde_json::from_value(json).unwrap();
+        let sender = email.sender.unwrap();
+        assert_eq!(sender.email_address.name, "Sarah McFarlin");
+        assert_eq!(email.subject, "");
+    }
+
+    #[test]
+    fn test_no_address_on_sender() {
+        let json = fs::read_to_string("src/fixtures/empty-subject.json").unwrap();
+        let mut json = serde_json::from_str::<Value>(&json).unwrap();
+        if let Some(sender) = json.pointer_mut("/sender") {
+            if let Some(email_address) = sender.pointer_mut("/emailAddress") {
+                if let Some(sender_obj) = email_address.as_object_mut() {
+                    sender_obj.remove("address");
+                }
+            }
+        }
         let email: Email = serde_json::from_value(json).unwrap();
         let sender = email.sender.unwrap();
         assert_eq!(sender.email_address.name, "Sarah McFarlin");

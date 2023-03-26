@@ -15,6 +15,12 @@ function Main() {
     const id = state.email?.id;
 
     const handleKeyDown = (event) => {
+      console.log("event", event);
+
+      if (event.target !== document.body) {
+        return;
+      }
+
       switch (event.key) {
         case "k":
         case "ArrowUp":
